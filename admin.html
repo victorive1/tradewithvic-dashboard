@@ -134,10 +134,10 @@ input:focus{border-color:var(--blue);}
     </div>
   </div>
   <nav class="nav">
-    <button class="nav-item active" onclick="showPage('overview')" data-page="overview"><span class="icon">📊</span><span>Overview</span></button>
-    <button class="nav-item" onclick="showPage('users')" data-page="users"><span class="icon">👥</span><span>Users</span></button>
-    <button class="nav-item" onclick="showPage('leaderboard')" data-page="leaderboard"><span class="icon">🏆</span><span>Leaderboard</span></button>
-    <button class="nav-item" onclick="showPage('reports')" data-page="reports"><span class="icon">📋</span><span>Trade Reports</span></button>
+    <button class="nav-item active" id="nav-overview" onclick="showPage('overview',this)"><span class="icon">📊</span><span>Overview</span></button>
+    <button class="nav-item" id="nav-users" onclick="showPage('users',this)"><span class="icon">👥</span><span>Users</span></button>
+    <button class="nav-item" id="nav-leaderboard" onclick="showPage('leaderboard',this)"><span class="icon">🏆</span><span>Leaderboard</span></button>
+    <button class="nav-item" id="nav-reports" onclick="showPage('reports',this)"><span class="icon">📋</span><span>Trade Reports</span></button>
     <button class="nav-item" onclick="window.location.href='/'"><span class="icon">📡</span><span>Signals</span></button>
   </nav>
   <div class="sidebar-footer">
@@ -229,11 +229,11 @@ if (!token || !isAdmin) window.location.href = '/login.html';
 document.getElementById('adminName').textContent = username || 'Admin';
 document.getElementById('adminInitial').textContent = (username||'A')[0].toUpperCase();
 
-function showPage(name) {
+function showPage(name, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
-  document.querySelector('[data-page="' + name + '"]').classList.add('active');
+  if(btn) btn.classList.add('active');
 }
 
 function doLogout() {
