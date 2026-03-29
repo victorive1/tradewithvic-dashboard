@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<script>(function(){ const t=localStorage.getItem('vs_theme')||'dark'; document.documentElement.setAttribute('data-theme',t); })();</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Trades — Vic's Signal Feed</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700;800&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--bg-void:#080a0f;--bg-deep:#0d1117;--bg-card:#111620;--bg-card-hover:#161d2e;--text-primary:#f0f2f8;--text-secondary:#8892a4;--text-muted:#4a5568;--border-subtle:rgba(255,255,255,0.06);--border-mid:rgba(255,255,255,0.1);--accent-gold:#f5c842;--accent-green:#00d68f;--accent-red:#ff4d6d;--accent-blue:#4da6ff;--accent-purple:#a78bfa;--radius-sm:6px;--radius-md:10px;--radius-lg:16px;}
+[data-theme="light"]{--bg-void:#f0f4f8;--bg-deep:#fff;--bg-card:#f8fafc;--bg-card-hover:#f1f5f9;--text-primary:#0f172a;--text-secondary:#334155;--text-muted:#64748b;--border-subtle:#e2e8f0;--border-mid:#cbd5e1;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg-void);color:var(--text-primary);min-height:100vh;}
+.header{background:var(--bg-card);border-bottom:1px solid var(--border-subtle);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.logo{display:flex;align-items:center;gap:12px;}
+.logo-mark{width:36px;height:36px;background:linear-gradient(135deg,#f5c842,#e6a817);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:#080a0f;}
+.logo-text h1{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;}
+.logo-text p{font-size:11px;color:var(--text-muted);}
+.header-right{display:flex;gap:10px;align-items:center;}
+.btn{background:var(--bg-card);border:1px solid var(--border-mid);border-radius:var(--radius-sm);padding:8px 16px;color:var(--text-secondary);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;}
+.btn:hover{color:var(--text-primary);border-color:var(--accent-blue);}
+.btn-primary{background:#3b82f6;border-color:#3b82f6;color:#fff;}
+.btn-primary:hover{background:#2563eb;}
+.layout{max-width:1100px;margin:0 auto;padding:32px 24px;}
+.tabs{display:flex;gap:4px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:4px;margin-bottom:28px;width:fit-content;}
+.tab{padding:8px 20px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;color:var(--text-muted);border:none;background:none;}
+.tab.active{background:var(--bg-deep);color:var(--text-primary);box-shadow:0 1px 3px rgba(0,0,0,0.3);}
+.upload-zone{border:2px dashed var(--border-mid);border-radius:var(--radius-lg);padding:60px 40px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--bg-card);margin-bottom:24px;}
+.upload-zone:hover,.upload-zone.drag{border-color:#3b82f6;background:rgba(59,130,246,0.05);}
+.upload-icon{font-size:48px;margin-bottom:16px;}
+.upload-title{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;margin-bottom:8px;}
+.upload-sub{font-size:13px;color:var(--text-muted);}
+.preview-img{max-width:100%;max-height:300px;border-radius:var(--radius-md);border:1px solid var(--border-subtle);margin:16px 0;}
+.analyze-btn{background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:var(--radius-md);padding:14px 32px;color:#fff;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;width:100%;margin-top:8px;transition:all 0.2s;}
+.analyze-btn:hover{opacity:0.9;}
+.analyze-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.loading{text-align:center;padding:40px;color:var(--text-muted);}
+.spinner{width:40px;height:40px;border:3px solid var(--border-subtle);border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.report{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:24px;}
+.report-header{padding:20px 24px;border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;justify-content:space-between;}
+.report-date{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;}
+.grade-badge{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.grade-A-plus{background:linear-gradient(135deg,#f5c842,#e6a817);color:#080a0f;}
+.grade-A{background:rgba(0,214,143,0.2);color:#00d68f;border:2px solid rgba(0,214,143,0.3);}
+.grade-B{background:rgba(77,166,255,0.2);color:#4da6ff;border:2px solid rgba(77,166,255,0.3);}
+.grade-C{background:rgba(255,77,109,0.2);color:#ff4d6d;border:2px solid rgba(255,77,109,0.3);}
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;padding:20px 24px;border-bottom:1px solid var(--border-subtle);}
+.metric{text-align:center;padding:12px;background:var(--bg-deep);border-radius:var(--radius-md);}
+.metric-label{font-size:10px;font-family:'Space Mono',monospace;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
+.metric-value{font-family:'Syne',sans-serif;font-weight:700;font-size:20px;}
+.metric-value.green{color:var(--accent-green);}
+.metric-value.red{color:var(--accent-red);}
+.metric-value.gold{color:var(--accent-gold);}
+.metric-value.blue{color:var(--accent-blue);}
+.feedback{padding:20px 24px;}
+.feedback-summary{font-size:14px;line-height:1.7;color:var(--text-secondary);margin-bottom:16px;}
+.fb-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.fb-box{background:var(--bg-deep);border-radius:var(--radius-md);padding:14px;}
+.fb-title{font-size:11px;font-family:'Space Mono',monospace;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;}
+.fb-item{font-size:13px;padding:4px 0;display:flex;gap:8px;}
+.fb-item::before{content:'✓';color:var(--accent-green);font-weight:700;flex-shrink:0;}
+.fb-item.imp::before{content:'↑';color:var(--accent-gold);}
+.coach-note{background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);border-radius:var(--radius-md);padding:14px;font-size:13px;color:var(--accent-purple);font-style:italic;}
+.trades-table{width:100%;border-collapse:collapse;font-size:12px;}
+.trades-table th{font-size:10px;font-family:'Space Mono',monospace;text-transform:uppercase;color:var(--text-muted);padding:10px 12px;text-align:left;border-bottom:1px solid var(--border-subtle);}
+.trades-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.03);font-family:'Space Mono',monospace;}
+.buy{color:var(--accent-green);}
+.sell{color:var(--accent-red);}
+.profit-pos{color:var(--accent-green);}
+.profit-neg{color:var(--accent-red);}
+.empty{text-align:center;padding:60px;color:var(--text-muted);font-family:'Space Mono',monospace;font-size:12px;}
+.error-box{background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.3);border-radius:var(--radius-md);padding:14px;color:#ff4d6d;font-size:13px;margin-bottom:16px;}
+.history-item{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:16px;margin-bottom:12px;cursor:pointer;transition:all 0.2s;}
+.history-item:hover{border-color:var(--border-mid);background:var(--bg-card-hover);}
+.hi-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.hi-date{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;}
+.hi-metrics{display:flex;gap:16px;font-size:12px;font-family:'Space Mono',monospace;color:var(--text-muted);}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">
+    <div class="logo-mark">VS</div>
+    <div class="logo-text"><h1>My Trades</h1><p>tradewithvic.com · Daily Journal</p></div>
+  </div>
+  <div class="header-right">
+    <button class="btn" onclick="window.location.href='/'">← Signals</button>
+    <button class="btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    <button class="btn" style="color:#ff4d6d;" onclick="doLogout()">Logout</button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('upload')">📤 Upload Trade</button>
+    <button class="tab" onclick="showTab('history')">📋 History</button>
+  </div>
+
+  <!-- UPLOAD TAB -->
+  <div id="tab-upload">
+    <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()" ondragover="handleDrag(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+      <div id="uploadContent">
+        <div class="upload-icon">📸</div>
+        <div class="upload-title">Drop your trade history screenshot</div>
+        <div class="upload-sub">Drag & drop or click to upload · Supports MT4, MT5, cTrader screenshots</div>
+      </div>
+      <img id="previewImg" class="preview-img" style="display:none;">
+    </div>
+    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(event)">
+    <div class="error-box" id="errorBox" style="display:none;"></div>
+    <button class="analyze-btn" id="analyzeBtn" onclick="analyzeImage()" style="display:none;">🤖 Analyze with Claude AI</button>
+    <div class="loading" id="loadingBox" style="display:none;">
+      <div class="spinner"></div>
+      <div>Claude is analyzing your trades...</div>
+    </div>
+    <div id="reportBox"></div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div id="tab-history" style="display:none;">
+    <div id="historyList"><div class="empty">Loading your trade history...</div></div>
+  </div>
+</div>
+
+<script>
+const SSE = 'https://tradewithvic.com.ngrok.dev';
+const token = localStorage.getItem('vs_token');
+if (!token) window.location.href = '/login.html';
+
+// Theme
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('vs_theme', next);
+  document.getElementById('themeBtn').textContent = next === 'dark' ? '🌙' : '☀️';
+}
+const _t = localStorage.getItem('vs_theme') || 'dark';
+document.documentElement.setAttribute('data-theme', _t);
+document.getElementById('themeBtn').textContent = _t === 'dark' ? '🌙' : '☀️';
+
+function doLogout() {
+  fetch(SSE + '/auth/logout', { method:'POST', headers:{'x-session-token':token} });
+  localStorage.clear();
+  window.location.href = '/login.html';
+}
+
+function showTab(tab) {
+  document.getElementById('tab-upload').style.display = tab === 'upload' ? 'block' : 'none';
+  document.getElementById('tab-history').style.display = tab === 'history' ? 'block' : 'none';
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='upload')||(i===1&&tab==='history')));
+  if (tab === 'history') loadHistory();
+}
+
+// ─── FILE HANDLING ────────────────────────────────────────────────────────────
+let currentFile = null, currentBase64 = null;
+
+function handleDrag(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('drag'); }
+function handleDragLeave() { document.getElementById('dropZone').classList.remove('drag'); }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+}
+function handleFile(e) { if (e.target.files[0]) processFile(e.target.files[0]); }
+
+function processFile(file) {
+  if (!file.type.startsWith('image/')) { showError('Please upload an image file.'); return; }
+  currentFile = file;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+    currentBase64 = dataUrl.split(',')[1];
+    document.getElementById('uploadContent').style.display = 'none';
+    const img = document.getElementById('previewImg');
+    img.src = dataUrl;
+    img.style.display = 'block';
+    document.getElementById('analyzeBtn').style.display = 'block';
+    document.getElementById('errorBox').style.display = 'none';
+    document.getElementById('reportBox').innerHTML = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.textContent = msg;
+  box.style.display = 'block';
+}
+
+// ─── ANALYZE ─────────────────────────────────────────────────────────────────
+async function analyzeImage() {
+  if (!currentBase64) return;
+  document.getElementById('analyzeBtn').style.display = 'none';
+  document.getElementById('loadingBox').style.display = 'block';
+  document.getElementById('errorBox').style.display = 'none';
+
+  try {
+    const res = await fetch(SSE + '/reports/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-session-token': token },
+      body: JSON.stringify({
+        imageBase64: currentBase64,
+        imageType: currentFile.type,
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      })
+    });
+    const data = await res.json();
+    document.getElementById('loadingBox').style.display = 'none';
+    if (data.ok) {
+      renderReport(data.report, document.getElementById('reportBox'));
+      document.getElementById('analyzeBtn').style.display = 'block';
+      document.getElementById('analyzeBtn').textContent = '📤 Upload Another';
+      document.getElementById('analyzeBtn').onclick = resetUpload;
+    } else {
+      showError(data.error || 'Analysis failed.');
+      document.getElementById('analyzeBtn').style.display = 'block';
+    }
+  } catch(e) {
+    document.getElementById('loadingBox').style.display = 'none';
+    showError('Connection error: ' + e.message);
+    document.getElementById('analyzeBtn').style.display = 'block';
+  }
+}
+
+function resetUpload() {
+  currentFile = null; currentBase64 = null;
+  document.getElementById('uploadContent').style.display = 'block';
+  document.getElementById('previewImg').style.display = 'none';
+  document.getElementById('analyzeBtn').style.display = 'none';
+  document.getElementById('analyzeBtn').textContent = '🤖 Analyze with Claude AI';
+  document.getElementById('analyzeBtn').onclick = analyzeImage;
+  document.getElementById('reportBox').innerHTML = '';
+  document.getElementById('fileInput').value = '';
+}
+
+// ─── RENDER REPORT ────────────────────────────────────────────────────────────
+function renderReport(r, container) {
+  const m = r.metrics || {};
+  const f = r.feedback || {};
+  const gradeClass = 'grade-' + (f.grade||'B').replace('+','-plus');
+  const profitColor = (m.netProfit||0) >= 0 ? 'green' : 'red';
+
+  const tradesHTML = (r.trades||[]).map(t => `
+    <tr>
+      <td style="font-weight:600;">${t.pair||'—'}</td>
+      <td class="${(t.direction||'').toLowerCase()==='buy'?'buy':'sell'}">${(t.direction||'').toUpperCase()}</td>
+      <td>${t.lots||'—'}</td>
+      <td>${t.entryPrice||'—'}</td>
+      <td>${t.exitPrice||'—'}</td>
+      <td class="${(t.profit||0)>=0?'profit-pos':'profit-neg'}">${(t.profit||0)>=0?'+':''}${t.profit||0}</td>
+      <td style="color:var(--accent-red)">${t.commission||0}</td>
+    </tr>
+  `).join('');
+
+  container.innerHTML = `
+    <div class="report">
+      <div class="report-header">
+        <div>
+          <div class="report-date">${r.date || 'Today'}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${m.totalTrades||0} trades · Balance $${m.startingBalance||0} → $${m.endingBalance||0}</div>
+        </div>
+        <div class="${gradeClass} grade-badge">${f.grade||'B'}</div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric"><div class="metric-label">Net Profit</div><div class="metric-value ${profitColor}">${(m.netProfit||0)>=0?'+':''}$${m.netProfit||0}</div></div>
+        <div class="metric"><div class="metric-label">Win Rate</div><div class="metric-value blue">${m.winRate||0}%</div></div>
+        <div class="metric"><div class="metric-label">Trades</div><div class="metric-value">${m.totalTrades||0}</div></div>
+        <div class="metric"><div class="metric-label">Wins / Loss</div><div class="metric-value"><span style="color:var(--accent-green)">${m.wins||0}</span> / <span style="color:var(--accent-red)">${m.losses||0}</span></div></div>
+        <div class="metric"><div class="metric-label">Avg R:R</div><div class="metric-value gold">${m.avgRR||'—'}</div></div>
+        <div class="metric"><div class="metric-label">Commission</div><div class="metric-value red">${m.commission||0}</div></div>
+        <div class="metric"><div class="metric-label">Best Trade</div><div class="metric-value green">+$${m.bestTrade||0}</div></div>
+        <div class="metric"><div class="metric-label">Worst Trade</div><div class="metric-value">$${m.worstTrade||0}</div></div>
+      </div>
+
+      <div class="feedback">
+        <div class="feedback-summary">${f.summary||''}</div>
+        <div class="fb-grid">
+          <div class="fb-box">
+            <div class="fb-title">✅ Strengths</div>
+            ${(f.strengths||[]).map(s=>`<div class="fb-item">${s}</div>`).join('')}
+          </div>
+          <div class="fb-box">
+            <div class="fb-title">📈 Improvements</div>
+            ${(f.improvements||[]).map(s=>`<div class="fb-item imp">${s}</div>`).join('')}
+          </div>
+        </div>
+        ${f.coachNote?`<div class="coach-note">💬 ${f.coachNote}</div>`:''}
+
+        ${tradesHTML?`
+        <div style="margin-top:20px;">
+          <div style="font-size:11px;font-family:'Space Mono',monospace;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;">Trade Breakdown</div>
+          <div style="overflow-x:auto;background:var(--bg-deep);border-radius:var(--radius-md);border:1px solid var(--border-subtle);">
+            <table class="trades-table">
+              <thead><tr><th>Pair</th><th>Dir</th><th>Lots</th><th>Entry</th><th>Exit</th><th>Profit</th><th>Comm</th></tr></thead>
+              <tbody>${tradesHTML}</tbody>
+            </table>
+          </div>
+        </div>`:''}
+      </div>
+    </div>
+  `;
+}
+
+// ─── HISTORY ──────────────────────────────────────────────────────────────────
+async function loadHistory() {
+  const list = document.getElementById('historyList');
+  list.innerHTML = '<div class="empty">Loading...</div>';
+  try {
+    const res = await fetch(SSE + '/reports/my', { headers: { 'x-session-token': token } });
+    const data = await res.json();
+    if (!data.reports || !data.reports.length) {
+      list.innerHTML = '<div class="empty">No trade reports yet. Upload your first screenshot!</div>';
+      return;
+    }
+    list.innerHTML = '';
+    data.reports.forEach(r => {
+      const m = r.metrics || {}, f = r.feedback || {};
+      const div = document.createElement('div');
+      div.className = 'history-item';
+      div.innerHTML = `
+        <div class="hi-top">
+          <div class="hi-date">${r.date||'Unknown date'}</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:${(m.netProfit||0)>=0?'var(--accent-green)':'var(--accent-red)'}">
+            ${(m.netProfit||0)>=0?'+':''}$${m.netProfit||0}
+          </div>
+        </div>
+        <div class="hi-metrics">
+          <span>Grade: <strong style="color:var(--accent-gold)">${f.grade||'—'}</strong></span>
+          <span>WR: ${m.winRate||0}%</span>
+          <span>Trades: ${m.totalTrades||0}</span>
+          <span>RR: ${m.avgRR||'—'}</span>
+        </div>
+      `;
+      div.onclick = () => {
+        showTab('upload');
+        document.getElementById('uploadContent').style.display = 'none';
+        document.getElementById('previewImg').style.display = 'none';
+        document.getElementById('analyzeBtn').style.display = 'none';
+        renderReport(r, document.getElementById('reportBox'));
+        const resetBtn = document.createElement('button');
+        resetBtn.className = 'analyze-btn';
+        resetBtn.textContent = '← Back to Upload';
+        resetBtn.onclick = resetUpload;
+        document.getElementById('reportBox').prepend(resetBtn);
+      };
+      list.appendChild(div);
+    });
+  } catch(e) {
+    list.innerHTML = '<div class="empty">Error loading history.</div>';
+  }
+}
+</script>
+</body>
+</html>
