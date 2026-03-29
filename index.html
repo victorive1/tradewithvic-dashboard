@@ -416,14 +416,6 @@ connectSSE();
 // Show admin button if admin
 if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBtn').style.display='flex';
 
-function toggleTheme() {
-  const current = document.documentElement.getAttribute('data-theme');
-  const next = current === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('vs_theme', next);
-  document.getElementById('themeBtn').textContent = next === 'dark' ? '🌙' : '☀️';
-}
-
 function doLogout() {
   const t = localStorage.getItem('vs_token');
   fetch('https://tradewithvic.com.ngrok.dev/auth/logout', { method:'POST', headers:{'x-session-token':t} });
@@ -642,7 +634,6 @@ function updateClock() {
     new Date().toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})+' ET · tradewithvic.com';
 }
 updateClock(); setInterval(updateClock, 1000);
-connectSSE();
 </script>
 </body>
 </html>
