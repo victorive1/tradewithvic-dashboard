@@ -1,6 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
+<script>
+(function(){
+  const t = localStorage.getItem('vs_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vic's Signal Feed — tradewithvic.com</title>
@@ -380,15 +386,7 @@ function connectSSE() {
     try {
       const sig = normalize(JSON.parse(e.data));
       allSignals.unshift(sig);
-      if ((sig.status||'active').toLowerCase() === 'active') {
-        const grid = document.getElementById('signalGrid');
-        document.getElementById('emptyActive').style.display = 'none';
-        grid.insertBefore(renderCard(sig, true), grid.firstChild);
-        document.getElementById('activeCount').textContent = allSignals.filter(s=>(s.status||'active').toLowerCase()==='active').length + ' Live';
-      }
-      updateStats();
-      renderHistoryTable();
-      updateFilterCount();
+      renderAll();
     } catch(err) { console.error('[SSE] signal parse error', err); }
   });
 
