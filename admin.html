@@ -368,7 +368,7 @@ async function loadReports() {
             <div class="report-metric">Commission: <strong style="color:var(--red)">${m.commission||0}</strong></div>
           </div>
           ${f.summary?'<div style="margin-top:10px;font-size:13px;color:var(--text2);line-height:1.6;padding-top:10px;border-top:1px solid var(--border);">'+f.summary+'</div>':''}
-          <button onclick="openReportModal(window.allReports_data[${ridx}])" style="margin-top:12px;padding:8px 18px;background:#1f6feb;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">View Full Analysis →</button>
+          <button onclick="openReportModal('${ridx}')" style="margin-top:12px;padding:8px 18px;background:#1f6feb;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">View Full Analysis →</button>
         </div>
       `;
     }).join('');
@@ -434,7 +434,7 @@ setInterval(loadAll, 15000);
 </div>
 <script>
 function closeReportModal(){document.getElementById('reportModal').style.display='none';}
-function openReportModal(r){
+function openReportModal(ridx){var r=window.allReports_data[ridx];if(!r){alert("No data");return;}
   if(!r)return;
   const m=r.metrics||{},f=r.feedback||{};
   const pc=(m.netProfit||0)>=0?'#3fb950':'#f47067';
