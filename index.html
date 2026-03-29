@@ -343,11 +343,11 @@ function connectSSE() {
     try {
       const sig = normalize(JSON.parse(e.data));
       allSignals.unshift(sig);
-      if (sig.status === 'Active') {
+      if ((sig.status||'active').toLowerCase() === 'active') {
         const grid = document.getElementById('signalGrid');
         document.getElementById('emptyActive').style.display = 'none';
         grid.insertBefore(renderCard(sig, true), grid.firstChild);
-        document.getElementById('activeCount').textContent = allSignals.filter(s=>s.status==='Active').length + ' Live';
+        document.getElementById('activeCount').textContent = allSignals.filter(s=>(s.status||'active').toLowerCase()==='active').length + ' Live';
       }
       updateStats();
       renderHistoryTable();
@@ -370,8 +370,8 @@ function reconnectSSE() {
 
 function updateStats() {
   const t=allSignals.length, a=allSignals.filter(s=>s.status==='Active').length;
-  const t1=allSignals.filter(s=>s.status==='TP1').length, t2=allSignals.filter(s=>s.status==='TP2').length;
-  const sl=allSignals.filter(s=>s.status==='SL').length;
+  const t1=allSignals.filter(s=>(s.status||'').toUpperCase()==='TP1').length, t2=allSignals.filter(s=>s.status==='TP2').length;
+  const sl=allSignals.filter(s=>(s.status||'').toUpperCase()==='SL').length;
   const closed=t1+t2+sl;
   document.getElementById('st-active').textContent=a;
   document.getElementById('st-wr').textContent=closed>0?Math.round(((t1+t2)/closed)*100)+'%':'—';
