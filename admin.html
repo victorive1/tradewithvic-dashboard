@@ -420,5 +420,44 @@ setInterval(loadAll, 15000);
     <div id="modalReportBody" style="padding:22px;"></div>
   </div>
 </div>
+
+<div id="reportModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;overflow-y:auto;padding:24px;" onclick="if(event.target===this)closeReportModal()">
+  <div style="max-width:680px;margin:0 auto;background:#161b22;border:1px solid #30363d;border-radius:16px;overflow:hidden;">
+    <div style="padding:16px 22px;border-bottom:1px solid #30363d;display:flex;align-items:center;justify-content:space-between;background:#161b22;">
+      <div id="modalTitle" style="font-family:'Space Mono',monospace;font-weight:700;font-size:15px;color:#e6edf3;"></div>
+      <button onclick="closeReportModal()" style="background:#21262d;border:1px solid #30363d;border-radius:8px;padding:6px 14px;color:#e6edf3;font-size:13px;cursor:pointer;">✕ Close</button>
+    </div>
+    <div id="modalBody" style="padding:22px;"></div>
+  </div>
+</div>
+<script>
+function closeReportModal(){document.getElementById('reportModal').style.display='none';}
+function openReportModal(r){
+  if(!r)return;
+  const m=r.metrics||{},f=r.feedback||{};
+  const pc=(m.netProfit||0)>=0?'#3fb950':'#f47067';
+  const gc=f.grade==='A+'?'background:#f9c846;color:#0d1117':f.grade==='A'?'background:rgba(63,185,80,0.15);color:#3fb950;border:1px solid rgba(63,185,80,0.3)':'background:rgba(88,166,255,0.15);color:#58a6ff;border:1px solid rgba(88,166,255,0.3)';
+  document.getElementById('modalTitle').textContent=r.username+' — '+(r.date||'');
+  const trades=(r.trades||[]).map(t=>'<tr><td style="padding:8px 12px;font-weight:600;">'+t.pair+'</td><td style="padding:8px 12px;color:'+((t.direction||'').toLowerCase()==='buy'?'#3fb950':'#f47067')+';">'+(t.direction||'').toUpperCase()+'</td><td style="padding:8px 12px;font-family:Space Mono,monospace;">'+(t.lots||'')+'</td><td style="padding:8px 12px;font-family:Space Mono,monospace;">'+(t.entryPrice||'')+'</td><td style="padding:8px 12px;font-family:Space Mono,monospace;">'+(t.exitPrice||'')+'</td><td style="padding:8px 12px;font-family:Space Mono,monospace;color:'+((t.profit||0)>=0?'#3fb950':'#f47067')+'">'+(t.profit>=0?'+':'')+t.profit+'</td><td style="padding:8px 12px;font-family:Space Mono,monospace;color:#f47067;">'+(t.commission||0)+'</td></tr>').join('');
+  document.getElementById('modalBody').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div><div style="font-size:12px;color:#7d8590;">Balance</div><div style="font-family:Space Mono,monospace;font-size:13px;">$${m.startingBalance||0} → $${m.endingBalance||0}</div></div>
+      <div style="text-align:center;"><div style="font-family:Space Mono,monospace;font-weight:700;font-size:32px;color:${pc}">${(m.netProfit||0)>=0?'+':''}$${m.netProfit||0}</div><div style="font-size:11px;color:#7d8590;">Net Profit</div></div>
+      <div style="width:52px;height:52px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:Space Mono,monospace;font-weight:700;font-size:20px;${gc}">${f.grade||'—'}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;">
+      ${[['Win Rate',(m.winRate||0)+'%','#58a6ff'],['Trades',m.totalTrades||0,'#e6edf3'],['W / L',(m.wins||0)+'/'+(m.losses||0),'#3fb950'],['Avg R:R',m.avgRR||'—','#f9c846'],['Gross','$'+(m.grossProfit||0),'#3fb950'],['Commission',m.commission||0,'#f47067'],['Best','+$'+(m.bestTrade||0),'#3fb950'],['Worst','$'+(m.worstTrade||0),'#e6edf3']].map(([l,v,c])=>'<div style="background:#21262d;border:1px solid #30363d;border-radius:8px;padding:10px;text-align:center;"><div style="font-size:9px;font-family:Space Mono,monospace;text-transform:uppercase;color:#7d8590;margin-bottom:5px;">'+l+'</div><div style="font-family:Space Mono,monospace;font-weight:700;font-size:15px;color:'+c+';">'+v+'</div></div>').join('')}
+    </div>
+    ${f.summary?'<div style="background:#21262d;border:1px solid #30363d;border-radius:8px;padding:14px;margin-bottom:14px;font-size:13px;color:#e6edf3;line-height:1.7;">'+f.summary+'</div>':''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <div style="background:#21262d;border:1px solid #30363d;border-radius:8px;padding:14px;"><div style="font-size:9px;font-family:Space Mono,monospace;text-transform:uppercase;color:#3fb950;margin-bottom:8px;">Strengths</div>${(f.strengths||[]).map(s=>'<div style="font-size:12px;color:#e6edf3;padding:3px 0;"><span style="color:#3fb950;">✓ </span>'+s+'</div>').join('')}</div>
+      <div style="background:#21262d;border:1px solid #30363d;border-radius:8px;padding:14px;"><div style="font-size:9px;font-family:Space Mono,monospace;text-transform:uppercase;color:#f9c846;margin-bottom:8px;">Improvements</div>${(f.improvements||[]).map(s=>'<div style="font-size:12px;color:#e6edf3;padding:3px 0;"><span style="color:#f9c846;">↑ </span>'+s+'</div>').join('')}</div>
+    </div>
+    ${f.coachNote?'<div style="background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.25);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px;color:#a78bfa;font-style:italic;">💬 '+f.coachNote+'</div>':''}
+    ${trades?'<div style="background:#21262d;border:1px solid #30363d;border-radius:8px;overflow:hidden;"><div style="padding:10px 14px;border-bottom:1px solid #30363d;font-size:9px;font-family:Space Mono,monospace;text-transform:uppercase;color:#7d8590;">Trade Breakdown</div><div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr><th style="padding:8px 12px;text-align:left;font-size:9px;font-family:Space Mono,monospace;text-transform:uppercase;color:#7d8590;">Pair</th><th style="padding:8px 12px;text-align:left;font-size:9px;font-family:Space Mono,monospace;text-transform:uppercase;color:#7d8590;">Dir</th><th style="padding:8px 12px;text-align:left;font-size:9px;font-family:Space Mono,monospace;text-transform:uppercase;color:#7d8590;">Lots</th><th style="padding:8px 12px;text-align:left;font-size:9px;font-family:Space Mono,monospace;text-transform:uppercase;color:#7d8590;">Entry</th><th style="padding:8px 12px;text-align:left;font-size:9px;font-family:Space Mono,monospace;text-transform:uppercase;color:#7d8590;">Exit</th><th style="padding:8px 12px;text-align:left;font-size:9px;font-family:Space Mono,monospace;text-transform:uppercase;color:#7d8590;">Profit</th><th style="padding:8px 12px;text-align:left;font-size:9px;font-family:Space Mono,monospace;text-transform:uppercase;color:#7d8590;">Comm</th></tr></thead><tbody>'+trades+'</tbody></table></div></div>':''}
+  `;
+  document.getElementById('reportModal').style.display='block';
+}
+</script>
 </body>
 </html><!-- cache bust -->
