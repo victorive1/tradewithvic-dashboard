@@ -1,262 +1,222 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
+<script>(function(){ const t=localStorage.getItem('vs_theme')||'dark'; document.documentElement.setAttribute('data-theme',t); })();</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Admin — Vic's Signal Feed</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700;800&family=Space+Mono&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:#0d1117;font-family:'DM Sans',sans-serif;color:#e6edf3;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
-.shell{display:flex;width:100%;max-width:1200px;height:600px;border-radius:14px;border:1px solid #30363d;overflow:hidden;background:#0d1117;}
+:root{--bg:#080a0f;--bg2:#0d1117;--card:#111620;--card2:#161d2e;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--text:#f0f2f8;--text2:#8892a4;--text3:#4a5568;--gold:#f5c842;--green:#00d68f;--red:#ff4d6d;--blue:#4da6ff;--purple:#a78bfa;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 
 /* SIDEBAR */
-.sidebar{width:210px;flex-shrink:0;background:#161b22;border-right:1px solid #30363d;display:flex;flex-direction:column;}
-.brand{padding:20px 16px;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:10px;}
-.brand-icon{width:36px;height:36px;background:#f9c846;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-weight:700;font-size:12px;color:#0d1117;flex-shrink:0;}
-.brand-text{font-family:'Space Mono',monospace;font-weight:700;font-size:13px;color:#e6edf3;line-height:1.2;}
-.brand-sub{font-size:10px;color:#7d8590;margin-top:2px;}
-.nav{padding:12px 8px;flex:1;overflow-y:auto;}
-.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;transition:background 0.15s;color:#7d8590;font-size:13px;font-weight:500;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;}
-.nav-item:hover{background:#21262d;color:#e6edf3;}
-.nav-item.active{background:#21262d;color:#e6edf3;}
-.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:0.7;}
-.nav-item.active svg{opacity:1;}
-.sidebar-footer{padding:12px 8px;border-top:1px solid #30363d;}
-.user-block{display:flex;align-items:center;gap:9px;padding:8px 10px;margin-bottom:8px;}
-.user-avatar{width:30px;height:30px;border-radius:50%;background:#f9c846;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#0d1117;flex-shrink:0;}
-.user-name{font-size:13px;font-weight:600;color:#e6edf3;}
-.user-role{font-size:9px;color:#7d8590;text-transform:uppercase;letter-spacing:0.5px;font-family:'Space Mono',monospace;}
-.signout-btn{width:100%;padding:8px;background:#3d1f1f;border:1px solid #5a2a2a;border-radius:8px;color:#f47067;font-size:12px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;}
-.signout-btn:hover{background:#4a2424;}
+.sidebar{position:fixed;top:0;left:0;width:240px;height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;}
+.sidebar-logo{padding:24px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.logo-mark{width:38px;height:38px;background:linear-gradient(135deg,#f5c842,#e6a817);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:#080a0f;flex-shrink:0;}
+.logo-text{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;line-height:1.2;}
+.logo-sub{font-size:10px;color:var(--text3);font-family:'Space Mono',monospace;margin-top:2px;}
+.nav{padding:16px 12px;flex:1;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:all 0.2s;color:var(--text2);font-size:14px;font-weight:500;margin-bottom:4px;border:none;background:none;width:100%;text-align:left;}
+.nav-item:hover{background:var(--card);color:var(--text);}
+.nav-item.active{background:var(--card);color:var(--text);border-left:3px solid var(--gold);}
+.nav-item .icon{width:20px;text-align:center;font-size:16px;}
+.sidebar-footer{padding:16px 12px;border-top:1px solid var(--border);}
+.admin-badge{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border-radius:10px;margin-bottom:8px;}
+.admin-avatar{width:32px;height:32px;background:linear-gradient(135deg,var(--gold),#e6a817);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#080a0f;flex-shrink:0;}
+.admin-name{font-size:13px;font-weight:600;}
+.admin-role{font-size:10px;color:var(--gold);font-family:'Space Mono',monospace;}
+.logout-btn{width:100%;padding:9px;background:rgba(255,77,109,0.08);border:1px solid rgba(255,77,109,0.2);border-radius:8px;color:var(--red);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;}
+.logout-btn:hover{background:rgba(255,77,109,0.15);}
 
 /* MAIN */
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-.main-inner{flex:1;overflow-y:auto;padding:24px;}
+.main{margin-left:240px;padding:32px;min-height:100vh;}
 .page{display:none;}
 .page.active{display:block;}
-.page-title{font-family:'Space Mono',monospace;font-weight:700;font-size:20px;color:#e6edf3;margin-bottom:4px;}
-.page-sub{font-size:13px;color:#7d8590;margin-bottom:20px;}
+.page-title{font-family:'Syne',sans-serif;font-weight:800;font-size:24px;margin-bottom:4px;}
+.page-sub{font-size:13px;color:var(--text2);margin-bottom:28px;}
 
-/* STAT CARDS */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
-.stat-card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:16px;opacity:0;transform:translateY(8px);transition:opacity 0.4s ease,transform 0.4s ease;}
-.stat-card.visible{opacity:1;transform:translateY(0);}
-.stat-label{font-family:'Space Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.6px;color:#7d8590;margin-bottom:10px;}
-.stat-bar{height:3px;width:40px;border-radius:2px;margin-bottom:10px;}
-.stat-value{font-family:'Space Mono',monospace;font-weight:700;font-size:22px;color:#e6edf3;margin-bottom:4px;}
-.stat-trend{font-size:11px;color:#7d8590;}
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;}
+.stat-label{font-size:11px;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);margin-bottom:8px;}
+.stat-value{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;}
+.stat-value.gold{color:var(--gold);}
+.stat-value.green{color:var(--green);}
+.stat-value.blue{color:var(--blue);}
+.stat-value.red{color:var(--red);}
 
-/* ONLINE PANEL */
-.panel{background:#161b22;border:1px solid #30363d;border-radius:10px;overflow:hidden;}
-.panel-header{padding:13px 16px;border-bottom:1px solid #30363d;display:flex;align-items:center;justify-content:space-between;}
-.panel-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;}
-.pulse{width:7px;height:7px;border-radius:50%;background:#3fb950;animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(63,185,80,0.4);}50%{box-shadow:0 0 0 4px rgba(63,185,80,0);}}
-.panel-count{font-size:12px;color:#7d8590;font-family:'Space Mono',monospace;}
-.user-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #30363d;transition:background 0.15s;}
-.user-row:hover{background:#21262d;}
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;margin-bottom:20px;overflow:hidden;}
+.card-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;}
+.card-body{padding:22px;}
+
+/* FORM */
+.form-row{display:flex;gap:12px;}
+input[type=text],input[type=password]{flex:1;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;}
+input:focus{border-color:var(--blue);}
+.btn{padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;border:none;}
+.btn-primary{background:#3b82f6;color:#fff;}
+.btn-primary:hover{background:#2563eb;}
+.btn-danger{background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.25);color:var(--red);padding:7px 14px;font-size:12px;}
+.btn-danger:hover{background:rgba(255,77,109,0.2);}
+.btn-sm{padding:6px 14px;font-size:12px;}
+
+/* ALERTS */
+.alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none;}
+.alert-success{background:rgba(0,214,143,0.1);border:1px solid rgba(0,214,143,0.2);color:var(--green);}
+.alert-error{background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.25);color:var(--red);}
+
+/* USER TABLE */
+.user-grid{display:flex;flex-direction:column;gap:0;}
+.user-row{display:grid;grid-template-columns:180px 100px 110px 160px 1fr 120px;align-items:center;padding:14px 22px;border-bottom:1px solid var(--border);transition:background 0.15s;gap:12px;}
 .user-row:last-child{border-bottom:none;}
-.u-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;flex-shrink:0;}
-.u-name{font-size:13px;font-weight:600;color:#e6edf3;}
-.u-meta{font-size:11px;color:#7d8590;margin-top:1px;}
-.u-badge{padding:3px 9px;border-radius:100px;font-size:10px;font-weight:600;font-family:'Space Mono',monospace;}
-.badge-active{background:rgba(63,185,80,0.12);color:#3fb950;border:1px solid rgba(63,185,80,0.25);}
-.badge-idle{background:rgba(249,200,70,0.12);color:#f9c846;border:1px solid rgba(249,200,70,0.25);}
-.badge-offline{background:rgba(125,133,144,0.1);color:#7d8590;border:1px solid #30363d;}
-.badge-admin{background:rgba(249,200,70,0.12);color:#f9c846;border:1px solid rgba(249,200,70,0.25);}
-.badge-member{background:rgba(125,133,144,0.1);color:#7d8590;border:1px solid #30363d;}
-.u-profit{font-family:'Space Mono',monospace;font-size:12px;margin-left:auto;color:#3fb950;font-weight:700;}
-.filter-tabs{display:flex;gap:6px;padding:10px 16px;border-top:1px solid #30363d;}
-.tab{padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;transition:all 0.15s;background:none;border:1px solid transparent;color:#7d8590;font-family:'DM Sans',sans-serif;}
-.tab:hover{background:#21262d;color:#e6edf3;}
-.tab.active{background:#21262d;border-color:#30363d;color:#e6edf3;}
-.empty-state{padding:32px;text-align:center;color:#7d8590;font-size:12px;font-family:'Space Mono',monospace;}
-
-/* USERS PAGE TABLE */
-.table-wrap{background:#161b22;border:1px solid #30363d;border-radius:10px;overflow:hidden;}
-.table-head{display:grid;grid-template-columns:1fr 90px 100px 140px 1fr 90px;padding:10px 16px;border-bottom:1px solid #30363d;background:#0d1117;gap:12px;}
-.table-head span{font-size:10px;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:0.6px;color:#7d8590;}
-.table-row{display:grid;grid-template-columns:1fr 90px 100px 140px 1fr 90px;padding:12px 16px;border-bottom:1px solid #30363d;align-items:center;gap:12px;transition:background 0.15s;}
-.table-row:hover{background:#21262d;}
-.table-row:last-child{border-bottom:none;}
-.t-name{display:flex;align-items:center;gap:9px;font-weight:600;font-size:13px;min-width:0;}
-.t-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.mono{font-family:'Space Mono',monospace;font-size:11px;color:#7d8590;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.del-btn{padding:5px 12px;background:#3d1f1f;border:1px solid #5a2a2a;border-radius:6px;color:#f47067;font-size:11px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.15s;white-space:nowrap;}
-.del-btn:hover{background:#4a2424;}
-
-/* CREATE USER FORM */
-.form-card{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:18px;margin-bottom:16px;}
-.form-title{font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
-.form-row{display:flex;gap:10px;}
-.form-input{flex:1;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px 13px;color:#e6edf3;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;}
-.form-input:focus{border-color:#58a6ff;}
-.create-btn{padding:10px 18px;background:#1f6feb;border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background 0.2s;white-space:nowrap;}
-.create-btn:hover{background:#388bfd;}
-.alert{padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:12px;display:none;}
-.alert-ok{background:rgba(63,185,80,0.1);border:1px solid rgba(63,185,80,0.25);color:#3fb950;}
-.alert-err{background:rgba(244,112,103,0.1);border:1px solid rgba(244,112,103,0.25);color:#f47067;}
+.user-row:hover{background:rgba(255,255,255,0.02);}
+.user-head{display:grid;grid-template-columns:180px 100px 110px 160px 1fr 120px;padding:10px 22px 10px;gap:12px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);}
+.user-head span{font-size:10px;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:0.7px;color:var(--text3);}
+.user-name{font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;}
+.user-avatar{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--purple),#7c3aed);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;font-family:'Space Mono',monospace;}
+.badge-admin{background:rgba(245,200,66,0.12);color:var(--gold);border:1px solid rgba(245,200,66,0.2);}
+.badge-member{background:rgba(138,138,138,0.1);color:var(--text2);border:1px solid var(--border);}
+.badge-online{background:rgba(0,214,143,0.1);color:var(--green);border:1px solid rgba(0,214,143,0.2);}
+.badge-offline{background:rgba(74,85,104,0.15);color:var(--text3);border:1px solid var(--border);}
+.dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+.dot-on{background:var(--green);}
+.dot-off{background:var(--text3);}
+.mono{font-family:'Space Mono',monospace;font-size:11px;color:var(--text2);}
+.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
 /* LEADERBOARD */
-.lb-head{display:grid;grid-template-columns:40px 1fr 110px 80px 80px 80px 70px;padding:10px 16px;border-bottom:1px solid #30363d;background:#0d1117;gap:12px;}
-.lb-head span{font-size:10px;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:0.6px;color:#7d8590;}
-.lb-row{display:grid;grid-template-columns:40px 1fr 110px 80px 80px 80px 70px;padding:13px 16px;border-bottom:1px solid #30363d;align-items:center;gap:12px;transition:background 0.15s;}
-.lb-row:hover{background:#21262d;}
+.lb-row{display:grid;grid-template-columns:40px 1fr 100px 80px 80px 80px 80px;align-items:center;padding:14px 22px;border-bottom:1px solid var(--border);gap:12px;transition:background 0.15s;}
+.lb-row:hover{background:rgba(255,255,255,0.02);}
 .lb-row:last-child{border-bottom:none;}
-.rank{font-family:'Space Mono',monospace;font-weight:700;font-size:15px;text-align:center;}
+.lb-head{display:grid;grid-template-columns:40px 1fr 100px 80px 80px 80px 80px;padding:10px 22px;gap:12px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02);}
+.lb-head span{font-size:10px;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:0.7px;color:var(--text3);}
+.rank{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;text-align:center;}
+.profit-pos{color:var(--green);font-weight:700;font-family:'Syne',sans-serif;font-size:15px;}
+.profit-neg{color:var(--red);font-weight:700;font-family:'Syne',sans-serif;font-size:15px;}
 
 /* REPORTS */
-.report-item{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:16px;margin-bottom:10px;transition:border-color 0.15s;}
-.report-item:hover{border-color:#58a6ff;}
-.report-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
-.report-meta{display:flex;gap:16px;flex-wrap:wrap;}
-.report-metric{font-size:11px;font-family:'Space Mono',monospace;color:#7d8590;}
-.report-metric strong{color:#e6edf3;}
-.grade-badge{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-weight:700;font-size:14px;flex-shrink:0;}
-.gA{background:rgba(63,185,80,0.15);color:#3fb950;border:1px solid rgba(63,185,80,0.3);}
-.gAp{background:#f9c846;color:#0d1117;}
-.gB{background:rgba(88,166,255,0.15);color:#58a6ff;border:1px solid rgba(88,166,255,0.3);}
-.gC{background:rgba(244,112,103,0.15);color:#f47067;border:1px solid rgba(244,112,103,0.3);}
+.report-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:12px;cursor:pointer;transition:all 0.2s;}
+.report-card:hover{border-color:var(--border2);background:var(--card);}
+.report-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.report-user{font-weight:700;font-size:15px;}
+.report-date{font-size:12px;color:var(--text2);margin-top:2px;}
+.report-metrics{display:flex;gap:20px;flex-wrap:wrap;}
+.report-metric{font-size:12px;font-family:'Space Mono',monospace;color:var(--text2);}
+.report-metric strong{color:var(--text);}
+.grade{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.grade-A-plus{background:linear-gradient(135deg,#f5c842,#e6a817);color:#080a0f;}
+.grade-A{background:rgba(0,214,143,0.15);color:var(--green);border:1px solid rgba(0,214,143,0.3);}
+.grade-B{background:rgba(77,166,255,0.15);color:var(--blue);border:1px solid rgba(77,166,255,0.3);}
+.grade-C{background:rgba(255,77,109,0.15);color:var(--red);border:1px solid rgba(255,77,109,0.3);}
+.empty{text-align:center;padding:40px;color:var(--text3);font-family:'Space Mono',monospace;font-size:12px;}
+
+@media(max-width:900px){
+  .sidebar{width:60px;}
+  .sidebar .logo-text,.sidebar .logo-sub,.nav-item span:not(.icon),.admin-name,.admin-role,.logout-btn{display:none;}
+  .main{margin-left:60px;}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+}
 </style>
 </head>
 <body>
-<div class="shell">
 
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div class="brand">
-      <div class="brand-icon">VS</div>
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">VS</div>
+    <div>
+      <div class="logo-text">Admin Panel</div>
+      <div class="logo-sub">tradewithvic.com</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <button class="nav-item active" id="nav-overview" onclick="showPage('overview',this)"><span class="icon">📊</span><span>Overview</span></button>
+    <button class="nav-item" id="nav-users" onclick="showPage('users',this)"><span class="icon">👥</span><span>Users</span></button>
+    <button class="nav-item" id="nav-leaderboard" onclick="showPage('leaderboard',this)"><span class="icon">🏆</span><span>Leaderboard</span></button>
+    <button class="nav-item" id="nav-reports" onclick="showPage('reports',this)"><span class="icon">📋</span><span>Trade Reports</span></button>
+    <button class="nav-item" onclick="window.location.href='/'"><span class="icon">📡</span><span>Signals</span></button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="admin-badge">
+      <div class="admin-avatar" id="adminInitial">V</div>
       <div>
-        <div class="brand-text">Admin Panel</div>
-        <div class="brand-sub">tradewithvic.com</div>
+        <div class="admin-name" id="adminName">Admin</div>
+        <div class="admin-role">ADMINISTRATOR</div>
       </div>
     </div>
-    <nav class="nav">
-      <button class="nav-item active" id="nav-overview" onclick="showPage('overview',this)">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 2.5A1.5 1.5 0 012.5 1h3A1.5 1.5 0 017 2.5v3A1.5 1.5 0 015.5 7h-3A1.5 1.5 0 011 5.5v-3zm8 0A1.5 1.5 0 0110.5 1h3A1.5 1.5 0 0115 2.5v3A1.5 1.5 0 0113.5 7h-3A1.5 1.5 0 019 5.5v-3zm-8 8A1.5 1.5 0 012.5 9h3A1.5 1.5 0 017 10.5v3A1.5 1.5 0 015.5 15h-3A1.5 1.5 0 011 13.5v-3zm8 0A1.5 1.5 0 0110.5 9h3A1.5 1.5 0 0115 10.5v3A1.5 1.5 0 0113.5 15h-3A1.5 1.5 0 019 13.5v-3z"/></svg>
-        Overview
-      </button>
-      <button class="nav-item" id="nav-users" onclick="showPage('users',this)">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm-5 6s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3z"/></svg>
-        Users
-      </button>
-      <button class="nav-item" id="nav-leaderboard" onclick="showPage('leaderboard',this)">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2.5 15a.5.5 0 11-1 0V1a.5.5 0 011 0v14zm4-4a.5.5 0 11-1 0V5a.5.5 0 011 0v6zm4 2a.5.5 0 11-1 0V3a.5.5 0 011 0v10zm4-8a.5.5 0 11-1 0V9a.5.5 0 011 0v6z"/></svg>
-        Leaderboard
-      </button>
-      <button class="nav-item" id="nav-reports" onclick="showPage('reports',this)">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4 0h8a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V2a2 2 0 012-2zm0 1a1 1 0 00-1 1v12a1 1 0 001 1h8a1 1 0 001-1V2a1 1 0 00-1-1H4zm1 3h6a.5.5 0 010 1H5a.5.5 0 010-1zm0 2h6a.5.5 0 010 1H5a.5.5 0 010-1zm0 2h4a.5.5 0 010 1H5a.5.5 0 010-1z"/></svg>
-        Trade Reports
-      </button>
-      <button class="nav-item" onclick="window.location.href='/'">
-        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 1a7 7 0 110 14A7 7 0 018 1zm0 3a.5.5 0 01.5.5v4.793l2.146 2.147a.5.5 0 01-.708.707L7.5 9.707V4.5A.5.5 0 018 4z"/></svg>
-        Signals
-      </button>
-    </nav>
-    <div class="sidebar-footer">
-      <div class="user-block">
-        <div class="user-avatar" id="adminInitial">A</div>
-        <div>
-          <div class="user-name" id="adminName">Admin</div>
-          <div class="user-role">Administrator</div>
-        </div>
-      </div>
-      <button class="signout-btn" onclick="doLogout()">Sign Out</button>
+    <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- OVERVIEW PAGE -->
+  <div class="page active" id="page-overview">
+    <div class="page-title">Overview</div>
+    <div class="page-sub">Welcome back. Here's what's happening.</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total Users</div><div class="stat-value blue" id="ov-users">—</div></div>
+      <div class="stat-card"><div class="stat-label">Online Now</div><div class="stat-value green" id="ov-online">—</div></div>
+      <div class="stat-card"><div class="stat-label">Trade Reports</div><div class="stat-value gold" id="ov-reports">—</div></div>
+      <div class="stat-card"><div class="stat-label">Top Profit</div><div class="stat-value green" id="ov-profit">—</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">🟢 Online Users</div></div>
+      <div id="ov-online-list" class="card-body"><div class="empty">No users online</div></div>
     </div>
   </div>
 
-  <!-- MAIN -->
-  <div class="main">
-    <div class="main-inner">
-
-      <!-- OVERVIEW -->
-      <div class="page active" id="page-overview">
-        <div class="page-title">Overview</div>
-        <div class="page-sub">Welcome back. Here's what's happening.</div>
-        <div class="stats-grid">
-          <div class="stat-card" id="sc-users">
-            <div class="stat-label">Total Users</div>
-            <div class="stat-bar" style="background:#58a6ff;"></div>
-            <div class="stat-value" id="ov-users">—</div>
-            <div class="stat-trend" id="ov-users-trend">Loading...</div>
-          </div>
-          <div class="stat-card" id="sc-online">
-            <div class="stat-label">Online Now</div>
-            <div class="stat-bar" style="background:#3fb950;"></div>
-            <div class="stat-value" id="ov-online">—</div>
-            <div class="stat-trend" id="ov-online-trend">Loading...</div>
-          </div>
-          <div class="stat-card" id="sc-reports">
-            <div class="stat-label">Trade Reports</div>
-            <div class="stat-bar" style="background:#d29922;"></div>
-            <div class="stat-value" id="ov-reports">—</div>
-            <div class="stat-trend" id="ov-reports-trend">Loading...</div>
-          </div>
-          <div class="stat-card" id="sc-profit">
-            <div class="stat-label">Top Profit</div>
-            <div class="stat-bar" style="background:#39d353;"></div>
-            <div class="stat-value" id="ov-profit">—</div>
-            <div class="stat-trend" id="ov-profit-trend">Loading...</div>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-header">
-            <div class="panel-title"><span class="pulse"></span> Online Users</div>
-            <span class="panel-count" id="online-count">0 active</span>
-          </div>
-          <div id="online-list"><div class="empty-state">No users online</div></div>
-          <div class="filter-tabs">
-            <button class="tab active" onclick="filterOnline('all',this)">All</button>
-            <button class="tab" onclick="filterOnline('active',this)">Active</button>
-            <button class="tab" onclick="filterOnline('idle',this)">Idle</button>
-          </div>
+  <!-- USERS PAGE -->
+  <div class="page" id="page-users">
+    <div class="page-title">Users</div>
+    <div class="page-sub">Manage access to Vic's Signal Feed.</div>
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-header"><div class="card-title">➕ Create New User</div></div>
+      <div class="card-body">
+        <div class="alert alert-error" id="createErr"></div>
+        <div class="alert alert-success" id="createOk"></div>
+        <div class="form-row">
+          <input type="text" id="newUsername" placeholder="Username">
+          <input type="password" id="newPassword" placeholder="Password">
+          <button class="btn btn-primary" onclick="createUser()">Create User</button>
         </div>
       </div>
-
-      <!-- USERS -->
-      <div class="page" id="page-users">
-        <div class="page-title">Users</div>
-        <div class="page-sub">Manage access to Vic's Signal Feed.</div>
-        <div class="form-card">
-          <div class="form-title">➕ Create New User</div>
-          <div class="alert alert-err" id="createErr"></div>
-          <div class="alert alert-ok" id="createOk"></div>
-          <div class="form-row">
-            <input class="form-input" type="text" id="newUsername" placeholder="Username">
-            <input class="form-input" type="password" id="newPassword" placeholder="Password">
-            <button class="create-btn" onclick="createUser()">Create User</button>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <div class="table-head">
-            <span>User</span><span>Role</span><span>Status</span><span>Last Login</span><span>IP / Device</span><span>Action</span>
-          </div>
-          <div id="usersTable"><div class="empty-state">Loading...</div></div>
-        </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">👥 All Users</div>
+        <span class="mono" id="userCount">Loading...</span>
       </div>
-
-      <!-- LEADERBOARD -->
-      <div class="page" id="page-leaderboard">
-        <div class="page-title">Leaderboard</div>
-        <div class="page-sub">Ranked by total profit.</div>
-        <div class="table-wrap">
-          <div class="lb-head">
-            <span>#</span><span>Trader</span><span>Net Profit</span><span>Win Rate</span><span>Consist.</span><span>Avg R:R</span><span>Trades</span>
-          </div>
-          <div id="leaderboardTable"><div class="empty-state">No reports yet</div></div>
-        </div>
+      <div class="user-head">
+        <span>User</span><span>Role</span><span>Status</span><span>Last Login</span><span>IP / Device</span><span>Action</span>
       </div>
-
-      <!-- REPORTS -->
-      <div class="page" id="page-reports">
-        <div class="page-title">Trade Reports</div>
-        <div class="page-sub">All submitted daily trade journals.</div>
-        <div id="allReports"><div class="empty-state">No reports yet</div></div>
-      </div>
-
+      <div class="user-grid" id="usersTable"><div class="empty">Loading...</div></div>
     </div>
   </div>
+
+  <!-- LEADERBOARD PAGE -->
+  <div class="page" id="page-leaderboard">
+    <div class="page-title">Leaderboard</div>
+    <div class="page-sub">Ranked by total profit.</div>
+    <div class="card">
+      <div class="lb-head">
+        <span>#</span><span>Trader</span><span>Profit</span><span>Win Rate</span><span>Consist.</span><span>Avg R:R</span><span>Trades</span>
+      </div>
+      <div id="leaderboardTable"><div class="empty">No trade reports submitted yet</div></div>
+    </div>
+  </div>
+
+  <!-- REPORTS PAGE -->
+  <div class="page" id="page-reports">
+    <div class="page-title">Trade Reports</div>
+    <div class="page-sub">All submitted daily trade journals.</div>
+    <div id="allReports"><div class="empty">No reports yet</div></div>
+  </div>
+
 </div>
 
 <script>
@@ -265,18 +225,15 @@ const token = localStorage.getItem('vs_token');
 const username = localStorage.getItem('vs_username');
 const isAdmin = localStorage.getItem('vs_isAdmin') === 'true';
 if (!token || !isAdmin) window.location.href = '/login.html';
+
 document.getElementById('adminName').textContent = username || 'Admin';
 document.getElementById('adminInitial').textContent = (username||'A')[0].toUpperCase();
-
-let allUsers = [], filterMode = 'all';
-const avatarColors = ['#1f6feb','#388bfd','#8957e5','#bc8cff','#2ea043','#3fb950','#e3b341','#d29922'];
-function avatarColor(name) { let h=0; for(let c of name) h+=c.charCodeAt(0); return avatarColors[h%avatarColors.length]; }
 
 function showPage(name, btn) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
-  if (btn) btn.classList.add('active');
+  if(btn) btn.classList.add('active');
 }
 
 function doLogout() {
@@ -285,147 +242,137 @@ function doLogout() {
   window.location.href = '/login.html';
 }
 
-// Animate stat cards
-setTimeout(() => {
-  document.querySelectorAll('.stat-card').forEach((c,i) => {
-    setTimeout(() => c.classList.add('visible'), i * 80);
-  });
-}, 600);
-
+// ─── LOAD DATA ────────────────────────────────────────────────────────────────
 async function loadAll() {
   await Promise.all([loadUsers(), loadReports()]);
 }
 
 async function loadUsers() {
-  try {
-    const res = await fetch(SSE + '/admin/users', { headers: { 'x-session-token': token } });
-    if (res.status === 401) { window.location.href = '/login.html'; return; }
-    const data = await res.json();
-    allUsers = data.users || [];
-    const online = allUsers.filter(u => u.online);
+  const res = await fetch(SSE + '/admin/users', { headers: { 'x-session-token': token } });
+  if (res.status === 401) { window.location.href = '/login.html'; return; }
+  const data = await res.json();
+  const users = data.users || [];
+  const online = users.filter(u => u.online);
 
-    // Stat cards
-    document.getElementById('ov-users').textContent = allUsers.length;
-    document.getElementById('ov-users-trend').textContent = allUsers.length + ' total members';
-    document.getElementById('ov-online').textContent = online.length;
-    document.getElementById('ov-online-trend').textContent = 'Peak: ' + online.length + ' today';
-    document.getElementById('online-count').textContent = online.length + ' active';
+  // Overview stats
+  document.getElementById('ov-users').textContent = users.length;
+  document.getElementById('ov-online').textContent = online.length;
 
-    renderOnlineList();
-    renderUsersTable();
-  } catch(e) { console.error(e); }
-}
-
-function renderOnlineList() {
-  const online = allUsers.filter(u => u.online);
-  const filtered = filterMode === 'all' ? online : online; // future: idle detection
-  const list = document.getElementById('online-list');
-  if (!online.length) { list.innerHTML = '<div class="empty-state">No users online</div>'; return; }
-  list.innerHTML = online.map(u => `
-    <div class="user-row">
-      <div class="u-avatar" style="background:${avatarColor(u.username)}">${u.username[0].toUpperCase()}</div>
-      <div>
-        <div class="u-name">${u.username}</div>
-        <div class="u-meta">${u.isAdmin?'Admin':'Member'} · joined ${new Date(u.createdAt).toLocaleDateString()}</div>
+  // Online list in overview
+  const ovList = document.getElementById('ov-online-list');
+  if (online.length) {
+    ovList.innerHTML = online.map(u => `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
+        <div class="user-avatar" style="background:linear-gradient(135deg,var(--green),#059669);">${u.username[0].toUpperCase()}</div>
+        <div>
+          <div style="font-weight:600;font-size:14px;">${u.username}</div>
+          <div class="mono">${u.session?.ip || ''} · ${u.session ? new Date(u.session.loginTime).toLocaleTimeString() : ''}</div>
+        </div>
+        <div style="margin-left:auto;"><span class="badge badge-online"><span class="dot dot-on"></span> Online</span></div>
       </div>
-      <span class="u-badge badge-active">active</span>
-    </div>
-  `).join('');
-}
+    `).join('');
+  } else {
+    ovList.innerHTML = '<div class="empty">No users currently online</div>';
+  }
 
-function filterOnline(mode, btn) {
-  filterMode = mode;
-  document.querySelectorAll('.filter-tabs .tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  renderOnlineList();
-}
+  // User count
+  document.getElementById('userCount').textContent = users.length + ' users';
 
-function renderUsersTable() {
+  // Users table
   const table = document.getElementById('usersTable');
-  if (!allUsers.length) { table.innerHTML = '<div class="empty-state">No users</div>'; return; }
-  table.innerHTML = allUsers.map(u => `
-    <div class="table-row">
-      <div class="t-name">
-        <div class="u-avatar" style="width:28px;height:28px;font-size:11px;background:${avatarColor(u.username)}">${u.username[0].toUpperCase()}</div>
-        <span>${u.username}</span>
+  table.innerHTML = users.map(u => `
+    <div class="user-row">
+      <div class="user-name">
+        <div class="user-avatar" style="background:${u.isAdmin?'linear-gradient(135deg,var(--gold),#e6a817)':'linear-gradient(135deg,var(--purple),#7c3aed)'};">${u.username[0].toUpperCase()}</div>
+        <span class="truncate">${u.username}</span>
       </div>
-      <div><span class="u-badge ${u.isAdmin?'badge-admin':'badge-member'}">${u.isAdmin?'Admin':'Member'}</span></div>
-      <div><span class="u-badge ${u.online?'badge-active':'badge-offline'}">${u.online?'Online':'Offline'}</span></div>
+      <div><span class="badge ${u.isAdmin?'badge-admin':'badge-member'}">${u.isAdmin?'Admin':'Member'}</span></div>
+      <div><span class="badge ${u.online?'badge-online':'badge-offline'}"><span class="dot ${u.online?'dot-on':'dot-off'}"></span>${u.online?'Online':'Offline'}</span></div>
       <div class="mono">${u.session?new Date(u.session.loginTime).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—'}</div>
-      <div class="mono">${u.session?(u.session.ip+' · '+u.session.device.substring(0,25)+'...'):'—'}</div>
-      <div>${u.isAdmin?'':'<button class="del-btn" onclick="deleteUser(''+u.username+'')">Delete</button>'}</div>
+      <div class="mono truncate">${u.session?(u.session.ip+' · '+u.session.device.substring(0,30)):'—'}</div>
+      <div>${u.isAdmin?'':'<button class="btn btn-danger" onclick="deleteUser(''+u.username+'')">Delete</button>'}</div>
     </div>
   `).join('');
 }
 
 async function loadReports() {
-  try {
-    const res = await fetch(SSE + '/admin/reports', { headers: { 'x-session-token': token } });
-    if (res.status === 401) return;
-    const data = await res.json();
-    const lb = data.leaderboard || [];
-    const rpts = data.reports || [];
+  const res = await fetch(SSE + '/admin/reports', { headers: { 'x-session-token': token } });
+  if (res.status === 401) return;
+  const data = await res.json();
 
-    // Stat cards
-    const topProfit = lb.length ? lb[0].totalProfit : 0;
-    const topUser = lb.length ? lb[0].username : '—';
-    document.getElementById('ov-profit').textContent = (topProfit>=0?'+$':'-$') + Math.abs(topProfit);
-    document.getElementById('ov-profit-trend').textContent = topUser + ' · top trader';
-    document.getElementById('ov-reports').textContent = rpts.length;
-    document.getElementById('ov-reports-trend').textContent = rpts.length + ' submitted';
+  // Overview profit
+  const lb = data.leaderboard || [];
+  const topProfit = lb.length ? lb[0].totalProfit : 0;
+  document.getElementById('ov-profit').textContent = (topProfit >= 0 ? '+$' : '-$') + Math.abs(topProfit);
+  document.getElementById('ov-reports').textContent = (data.reports||[]).length;
 
-    // Leaderboard
-    const lbEl = document.getElementById('leaderboardTable');
-    lbEl.innerHTML = lb.length ? lb.map((t,i) => `
+  // Leaderboard
+  const lbEl = document.getElementById('leaderboardTable');
+  if (lb.length) {
+    lbEl.innerHTML = lb.map((t, i) => `
       <div class="lb-row">
-        <div class="rank" style="color:${i===0?'#f9c846':i===1?'#8b949e':i===2?'#c9710d':'#7d8590'}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
-        <div style="display:flex;align-items:center;gap:9px;">
-          <div class="u-avatar" style="width:28px;height:28px;font-size:11px;background:${avatarColor(t.username)}">${t.username[0].toUpperCase()}</div>
-          <div><div style="font-weight:600;font-size:13px;">${t.username}</div><div class="mono">${t.totalDays} days</div></div>
+        <div class="rank" style="color:${i===0?'#f5c842':i===1?'#94a3b8':i===2?'#cd7f32':'var(--text3)'}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="user-avatar">${t.username[0].toUpperCase()}</div>
+          <div>
+            <div style="font-weight:600;">${t.username}</div>
+            <div class="mono">${t.totalDays} day${t.totalDays!==1?'s':''} · ${t.totalTrades} trades</div>
+          </div>
         </div>
-        <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:13px;color:${t.totalProfit>=0?'#3fb950':'#f47067'}">${t.totalProfit>=0?'+':''}$${t.totalProfit}</div>
-        <div style="color:#58a6ff;font-weight:600;font-size:13px;">${t.winRate}%</div>
-        <div style="color:#a78bfa;font-weight:600;font-size:13px;">${t.consistency}%</div>
-        <div style="color:#f9c846;font-weight:600;font-size:13px;">${t.avgRR}:1</div>
+        <div class="${t.totalProfit>=0?'profit-pos':'profit-neg'}">${t.totalProfit>=0?'+':''}$${t.totalProfit}</div>
+        <div style="color:var(--blue);font-weight:600;">${t.winRate}%</div>
+        <div style="color:var(--purple);font-weight:600;">${t.consistency}%</div>
+        <div style="color:var(--gold);font-weight:600;">${t.avgRR}:1</div>
         <div class="mono">${t.totalTrades}</div>
       </div>
-    `).join('') : '<div class="empty-state">No reports submitted yet</div>';
+    `).join('');
+  } else {
+    lbEl.innerHTML = '<div class="empty">No trade reports submitted yet</div>';
+  }
 
-    // Reports
-    const arEl = document.getElementById('allReports');
-    arEl.innerHTML = rpts.length ? rpts.map(r => {
-      const m=r.metrics||{}, f=r.feedback||{};
-      const gc = f.grade==='A+'?'gAp':f.grade==='A'?'gA':f.grade==='B'?'gB':'gC';
+  // All reports
+  const rpts = data.reports || [];
+  const arEl = document.getElementById('allReports');
+  if (rpts.length) {
+    arEl.innerHTML = rpts.map(r => {
+      const m = r.metrics || {}, f = r.feedback || {};
+      const gc = 'grade-' + (f.grade||'B').replace('+','-plus');
       return `
-        <div class="report-item">
+        <div class="report-card">
           <div class="report-top">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <div class="u-avatar" style="background:${avatarColor(r.username)}">${r.username[0].toUpperCase()}</div>
-              <div>
-                <div style="font-weight:600;font-size:14px;">${r.username}</div>
-                <div class="mono">${r.date||''}</div>
+            <div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="user-avatar">${r.username[0].toUpperCase()}</div>
+                <div>
+                  <div class="report-user">${r.username}</div>
+                  <div class="report-date">${r.date||''} · ${new Date(r.savedAt).toLocaleTimeString()}</div>
+                </div>
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:12px;">
               <div style="text-align:right;">
-                <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:16px;color:${(m.netProfit||0)>=0?'#3fb950':'#f47067'}">${(m.netProfit||0)>=0?'+':''}$${m.netProfit||0}</div>
-                <div class="mono">net profit</div>
+                <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:${(m.netProfit||0)>=0?'var(--green)':'var(--red)'}">
+                  ${(m.netProfit||0)>=0?'+':''}$${m.netProfit||0}
+                </div>
+                <div class="mono">Net Profit</div>
               </div>
-              <div class="grade-badge ${gc}">${f.grade||'—'}</div>
+              <div class="grade ${gc}">${f.grade||'—'}</div>
             </div>
           </div>
-          <div class="report-meta">
+          <div class="report-metrics">
             <div class="report-metric">Win Rate: <strong>${m.winRate||0}%</strong></div>
             <div class="report-metric">Trades: <strong>${m.totalTrades||0}</strong></div>
-            <div class="report-metric">W/L: <strong>${m.wins||0}/${m.losses||0}</strong></div>
+            <div class="report-metric">W/L: <strong style="color:var(--green)">${m.wins||0}</strong>/<strong style="color:var(--red)">${m.losses||0}</strong></div>
             <div class="report-metric">Avg R:R: <strong>${m.avgRR||'—'}</strong></div>
-            <div class="report-metric">Commission: <strong>${m.commission||0}</strong></div>
+            <div class="report-metric">Commission: <strong style="color:var(--red)">${m.commission||0}</strong></div>
           </div>
-          ${f.summary?'<div style="margin-top:10px;font-size:12px;color:#7d8590;line-height:1.6;padding-top:10px;border-top:1px solid #30363d;">'+f.summary+'</div>':''}
+          ${f.summary?'<div style="margin-top:10px;font-size:13px;color:var(--text2);line-height:1.6;padding-top:10px;border-top:1px solid var(--border);">'+f.summary+'</div>':''}
         </div>
       `;
-    }).join('') : '<div class="empty-state">No reports submitted yet</div>';
-  } catch(e) { console.error(e); }
+    }).join('');
+  } else {
+    arEl.innerHTML = '<div class="empty">No reports submitted yet</div>';
+  }
 }
 
 async function createUser() {
@@ -433,17 +380,29 @@ async function createUser() {
   const p = document.getElementById('newPassword').value;
   const err = document.getElementById('createErr');
   const ok = document.getElementById('createOk');
-  err.style.display='none'; ok.style.display='none';
-  if (!u||!p) { err.textContent='Username and password required.'; err.style.display='block'; return; }
-  const res = await fetch(SSE+'/admin/users',{method:'POST',headers:{'Content-Type':'application/json','x-session-token':token},body:JSON.stringify({username:u,password:p})});
+  err.style.display = 'none'; ok.style.display = 'none';
+  if (!u || !p) { err.textContent = 'Username and password required.'; err.style.display = 'block'; return; }
+  const res = await fetch(SSE + '/admin/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-session-token': token },
+    body: JSON.stringify({ username: u, password: p }),
+  });
   const data = await res.json();
-  if (data.ok) { ok.textContent='User '+u+' created!'; ok.style.display='block'; document.getElementById('newUsername').value=''; document.getElementById('newPassword').value=''; loadUsers(); }
-  else { err.textContent=data.error; err.style.display='block'; }
+  if (data.ok) {
+    ok.textContent = 'User ' + u + ' created successfully!';
+    ok.style.display = 'block';
+    document.getElementById('newUsername').value = '';
+    document.getElementById('newPassword').value = '';
+    loadUsers();
+  } else {
+    err.textContent = data.error;
+    err.style.display = 'block';
+  }
 }
 
 async function deleteUser(u) {
-  if (!confirm('Delete '+u+'? They will be logged out immediately.')) return;
-  const res = await fetch(SSE+'/admin/users/'+u,{method:'DELETE',headers:{'x-session-token':token}});
+  if (!confirm('Delete ' + u + '? They will be logged out immediately.')) return;
+  const res = await fetch(SSE + '/admin/users/' + u, { method: 'DELETE', headers: { 'x-session-token': token } });
   const data = await res.json();
   if (data.ok) loadUsers();
 }
@@ -452,4 +411,4 @@ loadAll();
 setInterval(loadAll, 15000);
 </script>
 </body>
-</html>
+</html><!-- cache bust -->
