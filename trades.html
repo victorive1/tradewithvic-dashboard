@@ -103,11 +103,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-void);color:var(--text
       <div id="uploadContent">
         <div class="upload-icon">📸</div>
         <div class="upload-title">Drop your trade history screenshot</div>
-        <div class="upload-sub">Drag & drop or click to upload · Supports MT4, MT5, cTrader screenshots</div>
+        <div class="upload-sub">Drag & drop or click to upload multiple pages · MT4, MT5, cTrader</div>
       </div>
       <img id="previewImg" class="preview-img" style="display:none;">
     </div>
-    <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFile(event)">
+    <input type="file" id="fileInput" accept="image/*" multiple style="display:none" onchange="handleFile(event)">
     <div class="error-box" id="errorBox" style="display:none;"></div>
     <button class="analyze-btn" id="analyzeBtn" onclick="analyzeImage()" style="display:none;">🤖 Analyze with Claude AI</button>
     <div class="loading" id="loadingBox" style="display:none;">
@@ -154,34 +154,40 @@ function showTab(tab) {
 }
 
 // ─── FILE HANDLING ────────────────────────────────────────────────────────────
-let currentFile = null, currentBase64 = null;
+let currentFiles = [], currentBase64s = [];
 
 function handleDrag(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('drag'); }
 function handleDragLeave() { document.getElementById('dropZone').classList.remove('drag'); }
 function handleDrop(e) {
   e.preventDefault();
   document.getElementById('dropZone').classList.remove('drag');
-  const file = e.dataTransfer.files[0];
-  if (file) processFile(file);
+  const files = Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith("image/"));
+  if (files.length) processFiles(files);
 }
-function handleFile(e) { if (e.target.files[0]) processFile(e.target.files[0]); }
+function handleFile(e) { const files=Array.from(e.target.files).filter(f=>f.type.startsWith("image/")); if(files.length) processFiles(files); }
 
-function processFile(file) {
-  if (!file.type.startsWith('image/')) { showError('Please upload an image file.'); return; }
-  currentFile = file;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const dataUrl = e.target.result;
-    currentBase64 = dataUrl.split(',')[1];
-    document.getElementById('uploadContent').style.display = 'none';
-    const img = document.getElementById('previewImg');
-    img.src = dataUrl;
-    img.style.display = 'block';
-    document.getElementById('analyzeBtn').style.display = 'block';
-    document.getElementById('errorBox').style.display = 'none';
-    document.getElementById('reportBox').innerHTML = '';
-  };
-  reader.readAsDataURL(file);
+function processFiles(files) {
+  currentFiles = files; currentBase64s = []; let loaded = 0;
+  const previews = new Array(files.length);
+  files.forEach((file, idx) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      previews[idx] = e.target.result;
+      currentBase64s[idx] = { base64: e.target.result.split(',')[1], type: file.type };
+      if (++loaded === files.length) {
+        document.getElementById('uploadContent').style.display = 'none';
+        document.getElementById('previewImg').style.display = 'none';
+        let tc = document.getElementById('thumbsContainer');
+        if (!tc) { tc = document.createElement('div'); tc.id = 'thumbsContainer'; tc.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:12px 0;'; document.getElementById('dropZone').appendChild(tc); }
+        tc.innerHTML = previews.map((src,i) => '<div style="position:relative;"><img src="'+src+'" style="height:90px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);"><div style="position:absolute;top:3px;right:3px;background:#3b82f6;color:#fff;font-size:9px;padding:2px 5px;border-radius:3px;">P'+(i+1)+'</div></div>').join('');
+        document.getElementById('analyzeBtn').style.display = 'block';
+        document.getElementById('analyzeBtn').textContent = '🤖 Analyze '+files.length+' Page'+(files.length>1?'s':'')+' with Claude AI';
+        document.getElementById('errorBox').style.display = 'none';
+        document.getElementById('reportBox').innerHTML = '';
+      }
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function showError(msg) {
@@ -192,9 +198,10 @@ function showError(msg) {
 
 // ─── ANALYZE ─────────────────────────────────────────────────────────────────
 async function analyzeImage() {
-  if (!currentBase64) return;
+  if (!currentBase64s.length) return;
   document.getElementById('analyzeBtn').style.display = 'none';
   document.getElementById('loadingBox').style.display = 'block';
+  document.getElementById('loadingBox').innerHTML = '<div class="spinner"></div><div>Claude is analyzing '+currentFiles.length+' page'+(currentFiles.length>1?'s':'')+' of trades...</div>';
   document.getElementById('errorBox').style.display = 'none';
 
   try {
@@ -202,8 +209,7 @@ async function analyzeImage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-session-token': token },
       body: JSON.stringify({
-        imageBase64: currentBase64,
-        imageType: currentFile.type,
+        images: currentBase64s,
         date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
       })
     });
@@ -226,7 +232,7 @@ async function analyzeImage() {
 }
 
 function resetUpload() {
-  currentFile = null; currentBase64 = null;
+  currentFiles = []; currentBase64s = []; const tc=document.getElementById("thumbsContainer"); if(tc) tc.remove();
   document.getElementById('uploadContent').style.display = 'block';
   document.getElementById('previewImg').style.display = 'none';
   document.getElementById('analyzeBtn').style.display = 'none';
