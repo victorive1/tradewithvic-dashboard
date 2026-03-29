@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin — Vic's Signal Feed</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#080a0f;font-family:'DM Sans',sans-serif;color:#e2e8f0;min-height:100vh;}
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700;800&family=Space+Mono&display=swap');
+  .header{background:#111620;border-bottom:1px solid #1e2a3a;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;}
+  .logo{display:flex;align-items:center;gap:12px;}
+  .logo-mark{width:36px;height:36px;background:linear-gradient(135deg,#f5c842,#e6a817);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;color:#080a0f;}
+  .logo-text h1{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#f1f5f9;}
+  .logo-text p{font-size:11px;color:#64748b;}
+  .header-right{display:flex;gap:10px;align-items:center;}
+  .btn{background:#111620;border:1px solid #1e2a3a;border-radius:8px;padding:8px 16px;color:#94a3b8;font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;}
+  .btn:hover{border-color:#3b82f6;color:#f1f5f9;}
+  .btn-primary{background:#3b82f6;border-color:#3b82f6;color:#fff;}
+  .btn-primary:hover{background:#2563eb;}
+  .btn-danger{background:rgba(255,77,109,0.1);border-color:rgba(255,77,109,0.3);color:#ff4d6d;}
+  .btn-danger:hover{background:rgba(255,77,109,0.2);}
+  .layout{max-width:1000px;margin:0 auto;padding:32px 24px;}
+  .section{background:#111620;border:1px solid #1e2a3a;border-radius:16px;padding:24px;margin-bottom:24px;}
+  .section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:#f1f5f9;margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+  .form-row{display:flex;gap:12px;margin-bottom:16px;}
+  input{background:#0d1117;border:1px solid #1e2a3a;border-radius:8px;padding:10px 14px;color:#f1f5f9;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;flex:1;}
+  input:focus{border-color:#3b82f6;}
+  table{width:100%;border-collapse:collapse;}
+  th{font-size:10px;font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:0.8px;color:#64748b;padding:8px 12px;text-align:left;border-bottom:1px solid #1e2a3a;}
+  td{padding:12px;font-size:13px;border-bottom:1px solid #0d1117;}
+  tr:last-child td{border-bottom:none;}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;}
+  .badge-online{background:rgba(0,214,143,0.1);color:#00d68f;border:1px solid rgba(0,214,143,0.2);}
+  .badge-offline{background:rgba(100,116,139,0.1);color:#64748b;border:1px solid rgba(100,116,139,0.2);}
+  .badge-admin{background:rgba(245,200,66,0.1);color:#f5c842;border:1px solid rgba(245,200,66,0.2);}
+  .error{background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.3);border-radius:8px;padding:10px 14px;font-size:13px;color:#ff4d6d;margin-bottom:12px;display:none;}
+  .success{background:rgba(0,214,143,0.1);border:1px solid rgba(0,214,143,0.2);border-radius:8px;padding:10px 14px;font-size:13px;color:#00d68f;margin-bottom:12px;display:none;}
+  .mono{font-family:'Space Mono',monospace;font-size:11px;color:#64748b;}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">
+    <div class="logo-mark">VS</div>
+    <div class="logo-text">
+      <h1>Admin Panel</h1>
+      <p>Vic's Signal Feed · Access Control</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="mono" id="adminName"></span>
+    <button class="btn" onclick="goToDashboard()">← Dashboard</button>
+    <button class="btn btn-danger" onclick="doLogout()">Logout</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <div class="section">
+    <div class="section-title">➕ Create New User</div>
+    <div class="error" id="createError"></div>
+    <div class="success" id="createSuccess"></div>
+    <div class="form-row">
+      <input type="text" id="newUsername" placeholder="Username">
+      <input type="password" id="newPassword" placeholder="Password">
+      <button class="btn btn-primary" onclick="createUser()">Create User</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">👥 Users & Active Sessions</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Last Login</th>
+          <th>IP Address</th>
+          <th>Device</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="usersTable"><tr><td colspan="7" style="text-align:center;color:#64748b;padding:20px;">Loading...</td></tr></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+const SSE = 'https://tradewithvic.com.ngrok.dev';
+const token = localStorage.getItem('vs_token');
+const username = localStorage.getItem('vs_username');
+const isAdmin = localStorage.getItem('vs_isAdmin') === 'true';
+
+if (!token || !isAdmin) { window.location.href = '/login.html'; }
+document.getElementById('adminName').textContent = username;
+
+async function loadUsers() {
+  const res = await fetch(SSE + '/admin/users', { headers: { 'x-session-token': token } });
+  if (res.status === 401) { window.location.href = '/login.html'; return; }
+  const data = await res.json();
+  const tbody = document.getElementById('usersTable');
+  tbody.innerHTML = '';
+  data.users.forEach(u => {
+    const session = u.session;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-weight:600;color:#f1f5f9;">${u.username}</td>
+      <td>${u.isAdmin ? '<span class="badge badge-admin">Admin</span>' : '<span class="badge badge-offline">Member</span>'}</td>
+      <td>${u.online ? '<span class="badge badge-online">● Online</span>' : '<span class="badge badge-offline">○ Offline</span>'}</td>
+      <td class="mono">${session ? new Date(session.loginTime).toLocaleString() : '—'}</td>
+      <td class="mono">${session ? session.ip : '—'}</td>
+      <td class="mono" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${session ? session.device.substring(0,40)+'...' : '—'}</td>
+      <td>${u.isAdmin ? '' : `<button class="btn btn-danger" onclick="deleteUser('${u.username}')">Delete</button>`}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function createUser() {
+  const username = document.getElementById('newUsername').value.trim();
+  const password = document.getElementById('newPassword').value;
+  const err = document.getElementById('createError');
+  const suc = document.getElementById('createSuccess');
+  err.style.display = 'none'; suc.style.display = 'none';
+  if (!username || !password) { err.textContent = 'Username and password required.'; err.style.display = 'block'; return; }
+  const res = await fetch(SSE + '/admin/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-session-token': token },
+    body: JSON.stringify({ username, password }),
+  });
+  const data = await res.json();
+  if (data.ok) {
+    suc.textContent = 'User ' + username + ' created successfully!';
+    suc.style.display = 'block';
+    document.getElementById('newUsername').value = '';
+    document.getElementById('newPassword').value = '';
+    loadUsers();
+  } else {
+    err.textContent = data.error; err.style.display = 'block';
+  }
+}
+
+async function deleteUser(username) {
+  if (!confirm('Delete user ' + username + '? They will be logged out immediately.')) return;
+  const res = await fetch(SSE + '/admin/users/' + username, {
+    method: 'DELETE',
+    headers: { 'x-session-token': token },
+  });
+  const data = await res.json();
+  if (data.ok) loadUsers();
+}
+
+function doLogout() {
+  fetch(SSE + '/auth/logout', { method: 'POST', headers: { 'x-session-token': token } });
+  localStorage.clear();
+  window.location.href = '/login.html';
+}
+
+function goToDashboard() { window.location.href = '/'; }
+
+loadUsers();
+setInterval(loadUsers, 10000);
+</script>
+</body>
+</html>

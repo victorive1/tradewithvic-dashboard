@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vic's Signal Feed — Login</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:#080a0f;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;color:#e2e8f0;}
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700;800&family=Space+Mono&display=swap');
+  .card{background:#111620;border:1px solid #1e2a3a;border-radius:16px;padding:40px;width:100%;max-width:400px;}
+  .logo{display:flex;align-items:center;gap:12px;margin-bottom:32px;}
+  .logo-mark{width:44px;height:44px;background:linear-gradient(135deg,#f5c842,#e6a817);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:16px;color:#080a0f;}
+  .logo-text h1{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:#f1f5f9;}
+  .logo-text p{font-size:12px;color:#64748b;}
+  .field{margin-bottom:16px;}
+  label{display:block;font-size:12px;color:#64748b;margin-bottom:6px;font-weight:500;text-transform:uppercase;letter-spacing:0.5px;}
+  input{width:100%;background:#0d1117;border:1px solid #1e2a3a;border-radius:8px;padding:12px 14px;color:#f1f5f9;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.2s;}
+  input:focus{border-color:#3b82f6;}
+  .btn{width:100%;background:#3b82f6;border:none;border-radius:8px;padding:13px;color:#fff;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:8px;transition:background 0.2s;}
+  .btn:hover{background:#2563eb;}
+  .btn:disabled{background:#1e3a5f;cursor:not-allowed;}
+  .error{background:rgba(255,77,109,0.1);border:1px solid rgba(255,77,109,0.3);border-radius:8px;padding:10px 14px;font-size:13px;color:#ff4d6d;margin-bottom:16px;display:none;}
+  .footer{text-align:center;margin-top:24px;font-size:11px;color:#334155;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-mark">VS</div>
+    <div class="logo-text">
+      <h1>Vic's Signal Feed</h1>
+      <p>tradewithvic.com · Members Only</p>
+    </div>
+  </div>
+  <div class="error" id="error"></div>
+  <div class="field"><label>Username</label><input type="text" id="username" placeholder="Enter username" autocomplete="username"></div>
+  <div class="field"><label>Password</label><input type="password" id="password" placeholder="Enter password" autocomplete="current-password"></div>
+  <button class="btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+  <div class="footer">Access restricted to authorized members only.</div>
+</div>
+<script>
+const SSE = 'https://tradewithvic.com.ngrok.dev';
+
+// Already logged in?
+const token = localStorage.getItem('vs_token');
+if (token) {
+  fetch(SSE + '/auth/validate', { headers: { 'x-session-token': token } })
+    .then(r => r.json()).then(d => { if(d.ok) window.location.href = '/'; });
+}
+
+async function doLogin() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('error');
+  if (!username || !password) { showError('Please enter username and password.'); return; }
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  try {
+    const res = await fetch(SSE + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      localStorage.setItem('vs_token', data.token);
+      localStorage.setItem('vs_username', username);
+      localStorage.setItem('vs_isAdmin', data.isAdmin);
+      window.location.href = data.isAdmin ? '/admin.html' : '/';
+    } else {
+      showError(data.error || 'Login failed.');
+      btn.disabled = false; btn.textContent = 'Sign In';
+    }
+  } catch(e) {
+    showError('Connection error. Please try again.');
+    btn.disabled = false; btn.textContent = 'Sign In';
+  }
+}
+
+function showError(msg) {
+  const err = document.getElementById('error');
+  err.textContent = msg; err.style.display = 'block';
+}
+
+document.addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+</script>
+</body>
+</html>

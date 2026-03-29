@@ -155,6 +155,16 @@
 </style>
 </head>
 <body>
+<script>
+// Auth check
+const _token = localStorage.getItem('vs_token');
+const _isAdmin = localStorage.getItem('vs_isAdmin') === 'true';
+if (!_token) { window.location.href = '/login.html'; }
+else {
+  fetch('https://tradewithvic.com.ngrok.dev/auth/validate', { headers: { 'x-session-token': _token } })
+    .then(r => r.json()).then(d => { if(!d.ok) { localStorage.clear(); window.location.href = '/login.html'; } });
+}
+</script>
 <div class="layout">
   <header class="header">
     <div class="header-left">
@@ -170,6 +180,8 @@
         <span id="liveStatus">CONNECTING</span>
       </div>
       <button class="btn" onclick="reconnectSSE()">↺ Refresh</button>
+      <button class="btn" id="adminBtn" style="display:none" onclick="window.location.href='/admin.html'">⚙ Admin</button>
+      <button class="btn" onclick="doLogout()" style="color:#ff4d6d;">Logout</button>
     </div>
   </header>
 
@@ -282,6 +294,7 @@
 // Replace vic-signal-server-production.up.railway.app with your actual Railway domain, e.g.:
 // https://vic-signal-server.up.railway.app
 const SSE_URL = 'https://tradewithvic.com.ngrok.dev/events';
+const _authToken = localStorage.getItem('vs_token');
 
 let allSignals = [], currentPage = 1;
 const PAGE_SIZE = 20;
@@ -327,7 +340,7 @@ function setStatus(state) {
 function connectSSE() {
   if (eventSource) { eventSource.close(); eventSource = null; }
   setStatus('connecting');
-  try { eventSource = new EventSource(SSE_URL); } catch(e) { setStatus('error'); scheduleReconnect(); return; }
+  try { eventSource = new EventSource(SSE_URL + '?token=' + _authToken); } catch(e) { setStatus('error'); scheduleReconnect(); return; }
 
   eventSource.addEventListener('connected', () => { setStatus('live'); });
 
@@ -360,7 +373,16 @@ function connectSSE() {
 
 function scheduleReconnect() {
   if (reconnectTimer) return;
-  reconnectTimer = setTimeout(() => { reconnectTimer = null; reconnectDelay = Math.min(reconnectDelay*1.5, 30000); connectSSE(); }, reconnectDelay);
+  reconnectTimer = setTimeout(() => { reconnectTimer = null; reconnectDelay = Math.min(reconnectDelay*1.5, 30000); connectSSE();
+// Show admin button if admin
+if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBtn').style.display='flex';
+
+function doLogout() {
+  const t = localStorage.getItem('vs_token');
+  fetch('https://tradewithvic.com.ngrok.dev/auth/logout', { method:'POST', headers:{'x-session-token':t} });
+  localStorage.clear();
+  window.location.href = '/login.html';
+} }, reconnectDelay);
 }
 
 function reconnectSSE() {
