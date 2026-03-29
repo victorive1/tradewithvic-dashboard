@@ -387,7 +387,7 @@ function getFiltered() {
   return allSignals.filter(s=>{
     if(filterStrategy && !s.strategy.includes(filterStrategy)) return false;
     if(filterDirection && s.dir!==filterDirection) return false;
-    if(filterStatus && s.status!==filterStatus) return false;
+    if(filterStatus && (s.status||'Active').toLowerCase()!==(filterStatus||'').toLowerCase() && filterStatus) return false;
     if(filterTimeframe && s.tf!==filterTimeframe) return false;
     return true;
   });
@@ -458,7 +458,7 @@ function renderCard(sig, isNew=false) {
 
 function renderGrid() {
   const grid=document.getElementById('signalGrid');
-  const active=getFiltered().filter(s=>s.status==='Active');
+  const active=getFiltered().filter(s=>(s.status||'Active').toLowerCase()==='active');
   grid.querySelectorAll('.signal-card').forEach(c=>c.remove());
   document.getElementById('emptyActive').style.display=active.length?'none':'block';
   document.getElementById('activeCount').textContent=active.length+' Live';
