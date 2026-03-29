@@ -388,6 +388,7 @@ function getFiltered() {
     if(filterStrategy && !s.strategy.includes(filterStrategy)) return false;
     if(filterDirection && s.dir!==filterDirection) return false;
     if(filterStatus && s.status!==filterStatus) return false;
+    if(filterTimeframe && s.tf!==filterTimeframe) return false;
     return true;
   });
 }
@@ -404,6 +405,7 @@ function applyFilters() {
   filterStrategy=document.getElementById('fStrategy').value;
   filterDirection=document.getElementById('fDirection').value;
   filterStatus=document.getElementById('fStatus').value;
+  filterTimeframe=document.getElementById('fTimeframe').value;
   currentPage=1; renderAll();
 }
 
@@ -411,7 +413,8 @@ function clearFilters() {
   document.getElementById('fStrategy').value='';
   document.getElementById('fDirection').value='';
   document.getElementById('fStatus').value='';
-  filterStrategy=''; filterDirection=''; filterStatus='';
+  filterStrategy=''; filterDirection=''; filterStatus=''; filterTimeframe='';
+  document.getElementById('fTimeframe').value='';
   currentPage=1; renderAll();
 }
 
