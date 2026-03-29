@@ -290,7 +290,7 @@ async function loadUsers() {
       <div><span class="badge ${u.online?'badge-online':'badge-offline'}"><span class="dot ${u.online?'dot-on':'dot-off'}"></span>${u.online?'Online':'Offline'}</span></div>
       <div class="mono">${u.session?new Date(u.session.loginTime).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—'}</div>
       <div class="mono truncate">${u.session?(u.session.ip+' · '+u.session.device.substring(0,30)):'—'}</div>
-      <div>${u.isAdmin?'':'<button class="btn btn-danger" onclick="deleteUser(''+u.username+'')">Delete</button>'}</div>
+      <div>${u.isAdmin ? '' : '<button class="btn btn-danger" onclick="deleteUser('' + u.username + '')" >Delete</button>'}</div>
     </div>
   `).join('');
 }
