@@ -328,7 +328,7 @@ const _authToken = localStorage.getItem('vs_token');
 
 let allSignals = [], currentPage = 1;
 const PAGE_SIZE = 20;
-let filterStrategy = '', filterDirection = '', filterStatus = '';
+let filterStrategy = '', filterDirection = '', filterStatus = '', filterTimeframe = '';
 let eventSource = null, reconnectTimer = null, reconnectDelay = 3000;
 
 function normalize(raw) {
@@ -395,33 +395,22 @@ function connectSSE() {
 
 function scheduleReconnect() {
   if (reconnectTimer) return;
-  reconnectTimer = setTimeout(() => { reconnectTimer = null; reconnectDelay = Math.min(reconnectDelay*1.5, 30000); 
-// Theme
-const savedTheme = localStorage.getItem('vs_theme') || 'dark';
-document.documentElement.setAttribute('data-theme', savedTheme);
-function updateThemeBtn() {
-  const t = document.documentElement.getAttribute('data-theme');
-  const btn = document.getElementById('themeBtn');
-  if(btn) btn.textContent = t === 'dark' ? '🌙' : '☀️';
+  reconnectTimer = setTimeout(() => { reconnectTimer = null; reconnectDelay = Math.min(reconnectDelay*1.5, 30000); connectSSE(); }, reconnectDelay);
 }
+
 function toggleTheme() {
   const current = document.documentElement.getAttribute('data-theme');
   const next = current === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('vs_theme', next);
-  updateThemeBtn();
+  document.getElementById('themeBtn').textContent = next === 'dark' ? '🌙' : '☀️';
 }
-updateThemeBtn();
-connectSSE();
-// Show admin button if admin
-if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBtn').style.display='flex';
 
 function doLogout() {
   const t = localStorage.getItem('vs_token');
   fetch('https://tradewithvic.com.ngrok.dev/auth/logout', { method:'POST', headers:{'x-session-token':t} });
   localStorage.clear();
   window.location.href = '/login.html';
-} }, reconnectDelay);
 }
 
 function reconnectSSE() {
@@ -511,8 +500,8 @@ function renderCard(sig, isNew=false) {
     </div>
     <div class="card-footer">
       <span class="card-time">${sig.dateStr} · ${sig.timeStr}</span>
-      <a href="${getTVUrl(sig)}" target="_blank" onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--accent-blue);text-decoration:none;padding:4px 8px;border:1px solid rgba(59,130,246,0.3);border-radius:4px;transition:all 0.2s;" onmouseover="this.style.background='rgba(59,130,246,0.1)'" onmouseout="this.style.background='transparent'">📈 Chart</a>
-      <a href="${getTVUrl(sig)}" target="_blank" onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3b82f6;text-decoration:none;padding:3px 8px;border:1px solid rgba(59,130,246,0.3);border-radius:4px;">📈 Chart</a><span class="status-chip status-${sk}">${(sig.status||'Active').toUpperCase()}</span>
+      <a href="${getTVUrl(sig)}" target="_blank" onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3b82f6;text-decoration:none;padding:3px 8px;border:1px solid rgba(59,130,246,0.3);border-radius:4px;">📈 Chart</a>
+      <span class="status-chip status-${sk}">${(sig.status||'Active').toUpperCase()}</span>
     </div>`;
   return card;
 }
@@ -634,6 +623,8 @@ function updateClock() {
     new Date().toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})+' ET · tradewithvic.com';
 }
 updateClock(); setInterval(updateClock, 1000);
+connectSSE();
+if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBtn').style.display='flex';
 </script>
 </body>
 </html>
