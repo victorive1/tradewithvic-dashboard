@@ -293,9 +293,9 @@ function normalize(raw) {
   return {
     id:        raw.id || Date.now(),
     pair:      (raw.pair || '').replace('/', ''),
-    dir:       (raw.direction === 'LONG' || raw.direction === 'BUY') ? 'LONG' : 'SHORT',
+    dir:       (raw.dir || raw.direction || '').toUpperCase() === 'LONG' || (raw.dir || raw.direction || '').toUpperCase() === 'BUY' ? 'LONG' : 'SHORT',
     strategy:  raw.strategy  || 'Elite FX',
-    tf:        raw.timeframe || 'M15+H1',
+    tf:        raw.tf || raw.timeframe || 'M15+H1',
     session:   raw.session   || '—',
     rating:    raw.rating    || 'A',
     score:     raw.score     || null,
