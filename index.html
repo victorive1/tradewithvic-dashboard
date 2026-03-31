@@ -118,6 +118,8 @@
   .price-cell.tp1 .pv,.price-cell.tp2 .pv{color:var(--accent-green);}
   .price-cell.rr{border-color:rgba(245,200,66,0.2);background:rgba(245,200,66,0.04);}
   .price-cell.rr .pv{color:var(--accent-gold);}
+  .price-cell .pp{font-size:9px;font-family:'Space Mono',monospace;margin-top:3px;letter-spacing:0.3px;}
+  .price-cell .pp.green{color:var(--accent-green);} .price-cell .pp.red{color:var(--accent-red);}
   .card-footer{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--border-subtle);}
   .card-time{font-size:10px;font-family:'Space Mono',monospace;color:var(--text-muted);}
   .status-chip{font-size:10px;font-family:'Space Mono',monospace;padding:3px 10px;border-radius:100px;font-weight:700;letter-spacing:0.5px;}
@@ -373,6 +375,15 @@ const PAGE_SIZE = 20;
 let filterStrategy = '', filterDirection = '', filterStatus = '', filterTimeframe = '';
 let eventSource = null, reconnectTimer = null, reconnectDelay = 3000;
 
+function calcPips(pair, from, to) {
+  const f=parseFloat(from), t=parseFloat(to);
+  if(isNaN(f)||isNaN(t)) return null;
+  const p=(pair||'').toUpperCase();
+  const pip=p.includes('JPY')?0.01:(p.includes('XAU')||p.includes('GOLD'))?0.1:0.0001;
+  return Math.abs(t-f)/pip;
+}
+function fmtPips(v){if(v==null)return '—';return v>=10?Math.round(v)+'p':v.toFixed(1)+'p';}
+
 function normalize(raw) {
   const ts = new Date(raw.timestamp || raw.receivedAt || Date.now());
   return {
@@ -553,9 +564,9 @@ function renderCard(sig, isNew=false) {
     </div>
     <div class="price-grid">
       <div class="price-cell entry"><div class="pl">Entry</div><div class="pv">${sig.entry}</div></div>
-      <div class="price-cell sl">   <div class="pl">Stop</div> <div class="pv">${sig.sl}</div></div>
-      <div class="price-cell tp1">  <div class="pl">TP1</div>  <div class="pv">${sig.tp1}</div></div>
-      <div class="price-cell tp2">  <div class="pl">TP2</div>  <div class="pv">${sig.tp2}</div></div>
+      <div class="price-cell sl">   <div class="pl">Stop</div> <div class="pv">${sig.sl}</div><div class="pp red">${fmtPips(calcPips(sig.pair,sig.entry,sig.sl))}</div></div>
+      <div class="price-cell tp1">  <div class="pl">TP1</div>  <div class="pv">${sig.tp1}</div><div class="pp green">+${fmtPips(calcPips(sig.pair,sig.entry,sig.tp1))}</div></div>
+      <div class="price-cell tp2">  <div class="pl">TP2</div>  <div class="pv">${sig.tp2}</div><div class="pp green">+${fmtPips(calcPips(sig.pair,sig.entry,sig.tp2))}</div></div>
       <div class="price-cell rr">   <div class="pl">R:R</div>  <div class="pv">1:${sig.rr}</div></div>
     </div>
     ${sig.status === 'Warning' ? `<div class="warning-bar">⚠️ ${sig.warningReason || 'Price moving against trade'}</div>` : ''}
@@ -637,9 +648,9 @@ function openModal(sig) {
     <div class="modal-section">
       <div class="modal-section-title">Price Levels</div>
       <div class="modal-row"><span class="mk">Entry</span><span class="mv" style="color:var(--accent-blue)">${sig.entry}</span></div>
-      <div class="modal-row"><span class="mk">Stop Loss</span><span class="mv" style="color:var(--accent-red)">${sig.sl}</span></div>
-      <div class="modal-row"><span class="mk">Take Profit 1</span><span class="mv" style="color:var(--accent-green)">${sig.tp1}</span></div>
-      <div class="modal-row"><span class="mk">Take Profit 2</span><span class="mv" style="color:var(--accent-green)">${sig.tp2}</span></div>
+      <div class="modal-row"><span class="mk">Stop Loss</span><span class="mv" style="color:var(--accent-red)">${sig.sl} <span style="font-size:10px;opacity:0.7">(${fmtPips(calcPips(sig.pair,sig.entry,sig.sl))} risk)</span></span></div>
+      <div class="modal-row"><span class="mk">Take Profit 1</span><span class="mv" style="color:var(--accent-green)">${sig.tp1} <span style="font-size:10px;opacity:0.7">(+${fmtPips(calcPips(sig.pair,sig.entry,sig.tp1))})</span></span></div>
+      <div class="modal-row"><span class="mk">Take Profit 2</span><span class="mv" style="color:var(--accent-green)">${sig.tp2} <span style="font-size:10px;opacity:0.7">(+${fmtPips(calcPips(sig.pair,sig.entry,sig.tp2))})</span></span></div>
       <div class="modal-row"><span class="mk">Risk : Reward</span><span class="mv" style="color:var(--accent-gold)">1:${sig.rr}</span></div>
     </div>
     <div class="modal-section">
