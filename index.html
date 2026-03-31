@@ -125,6 +125,14 @@
   .status-tp1{background:rgba(0,214,143,0.12);color:var(--accent-green);border:1px solid rgba(0,214,143,0.2);}
   .status-tp2{background:rgba(0,214,143,0.2);color:var(--accent-green);border:1px solid rgba(0,214,143,0.3);}
   .status-sl{background:var(--accent-red-dim);color:var(--accent-red);border:1px solid rgba(255,77,109,0.2);}
+  .status-tp1hit{background:rgba(0,214,143,0.12);color:var(--accent-green);border:1px solid rgba(0,214,143,0.2);}
+  .status-tp2hit{background:rgba(0,214,143,0.2);color:var(--accent-green);border:1px solid rgba(0,214,143,0.3);}
+  .status-slhit{background:var(--accent-red-dim);color:var(--accent-red);border:1px solid rgba(255,77,109,0.2);}
+  .status-warning{background:rgba(255,159,67,0.15);color:var(--accent-amber);border:1px solid rgba(255,159,67,0.25);animation:pulse-warn 2s infinite;}
+  @keyframes pulse-warn{0%,100%{opacity:1;}50%{opacity:0.6;}}
+  .tag-time{background:rgba(245,200,66,0.08);border-color:rgba(245,200,66,0.18);color:var(--accent-gold);font-size:9px;}
+  .tag-warning{background:rgba(255,159,67,0.12);border-color:rgba(255,159,67,0.2);color:var(--accent-amber);font-size:9px;}
+  .warning-bar{background:rgba(255,159,67,0.08);border:1px solid rgba(255,159,67,0.2);border-radius:var(--radius-sm);padding:6px 10px;margin-top:8px;margin-bottom:4px;font-size:10px;font-family:'Space Mono',monospace;color:var(--accent-amber);display:flex;align-items:center;gap:6px;}
   .status-pending{background:var(--bg-glass);color:var(--text-muted);border:1px solid var(--border-subtle);}
   .new-flash{position:absolute;top:10px;right:12px;font-size:9px;font-family:'Space Mono',monospace;background:var(--accent-gold);color:#080a0f;padding:2px 7px;border-radius:100px;font-weight:700;letter-spacing:0.5px;animation:flashIn 0.3s ease,flashOut 0.5s 3s ease forwards;}
   @keyframes flashIn{from{opacity:0;transform:scale(0.6);}to{opacity:1;transform:scale(1);}}
@@ -233,7 +241,35 @@ else {
     <span class="filter-label">FILTER</span>
     <select class="filter-select" id="fStrategy" onchange="applyFilters()">
       <option value="">All Strategies</option>
-      <option>FVG</option><option>Engulfing</option><option>Breakout</option><option>Pullback</option>
+      <option>Elite FX</option>
+      <option>No-Wick Continuation</option>
+      <option>Break &amp; Retest</option>
+      <option>FVG</option>
+      <option>Engulfing</option>
+      <option>Breakout</option>
+      <option>Pullback</option>
+      <option>Head &amp; Shoulders</option>
+      <option>Doji Reversal</option>
+      <option>Supply &amp; Demand</option>
+      <option>Double Top/Bottom</option>
+      <option>Triangle</option>
+      <option>Flag Pattern</option>
+      <option>S/R Zone</option>
+      <option>Monday Sweep</option>
+      <option>MSS + FVG</option>
+      <option>HH/LL Trend</option>
+      <option>HTF POI</option>
+      <option>Bollinger Band</option>
+      <option>VWAP</option>
+      <option>Wyckoff</option>
+      <option>ICT Silver Bullet</option>
+      <option>SMC Order Block</option>
+      <option>CRT</option>
+      <option>OHLC/OLHC</option>
+      <option>SMT Divergence</option>
+      <option>MMBM</option>
+      <option>Breaker Block</option>
+      <option>Liquidity Sweep</option>
     </select>
     <select class="filter-select" id="fDirection" onchange="applyFilters()">
       <option value="">All Directions</option><option>LONG</option><option>SHORT</option>
@@ -242,7 +278,12 @@ else {
       <option value="">All Timeframes</option><option>1M</option><option>5M</option><option>15M</option><option>15min</option><option>30M</option><option>1H</option><option>H1</option><option>4H</option><option>H4</option><option>1D</option>
     </select>
     <select class="filter-select" id="fStatus" onchange="applyFilters()">
-      <option value="">All Status</option><option>Active</option><option>TP1</option><option>TP2</option><option>SL</option>
+      <option value="">All Status</option>
+      <option>Active</option>
+      <option>TP1 Hit</option>
+      <option>TP2 Hit</option>
+      <option>SL Hit</option>
+      <option>Warning</option>
     </select>
     <button class="btn" onclick="clearFilters()">✕ Clear</button>
     <div class="filter-spacer"></div>
@@ -349,6 +390,9 @@ function normalize(raw) {
     timeStr:   ts.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'}),
     dateStr:   ts.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
     raw,
+    timeEstimate: raw.timeEstimate || null,
+    warningReason: raw.warningReason || null,
+    currentPrice: raw.currentPrice || null,
   };
 }
 
@@ -391,6 +435,19 @@ function connectSSE() {
     } catch(err) { console.error('[SSE] signal parse error', err); }
   });
 
+  eventSource.addEventListener('status_update', (e) => {
+    try {
+      const update = JSON.parse(e.data);
+      const sig = allSignals.find(s => s.id === update.id);
+      if (sig) {
+        sig.status = update.status;
+        if (update.warningReason) sig.warningReason = update.warningReason;
+        if (update.currentPrice) sig.currentPrice = update.currentPrice;
+        renderAll();
+      }
+    } catch(err) { console.error('[SSE] status_update parse error', err); }
+  });
+
   eventSource.onerror = () => { setStatus('error'); eventSource.close(); eventSource = null; scheduleReconnect(); };
 }
 
@@ -421,8 +478,9 @@ function reconnectSSE() {
 
 function updateStats() {
   const t=allSignals.length, a=allSignals.filter(s=>s.status==='Active').length;
-  const t1=allSignals.filter(s=>(s.status||'').toUpperCase()==='TP1').length, t2=allSignals.filter(s=>s.status==='TP2').length;
-  const sl=allSignals.filter(s=>(s.status||'').toUpperCase()==='SL').length;
+  const t1=allSignals.filter(s=>{const st=(s.status||'').toUpperCase();return st==='TP1'||st==='TP1 HIT';}).length;
+  const t2=allSignals.filter(s=>{const st=(s.status||'').toUpperCase();return st==='TP2'||st==='TP2 HIT';}).length;
+  const sl=allSignals.filter(s=>{const st=(s.status||'').toUpperCase();return st==='SL'||st==='SL HIT';}).length;
   const closed=t1+t2+sl;
   document.getElementById('st-active').textContent=a;
   document.getElementById('st-wr').textContent=closed>0?Math.round(((t1+t2)/closed)*100)+'%':'—';
@@ -485,6 +543,7 @@ function renderCard(sig, isNew=false) {
           <span class="tag tag-tf">${sig.tf}</span>
           <span class="tag tag-strategy">${sig.strategy}</span>
           <span class="tag tag-session">${sig.session}</span>
+          ${sig.timeEstimate ? `<span class="tag tag-time">⏱ ${sig.timeEstimate}</span>` : ''}
         </div>
       </div>
       <div class="card-right">
@@ -499,6 +558,7 @@ function renderCard(sig, isNew=false) {
       <div class="price-cell tp2">  <div class="pl">TP2</div>  <div class="pv">${sig.tp2}</div></div>
       <div class="price-cell rr">   <div class="pl">R:R</div>  <div class="pv">1:${sig.rr}</div></div>
     </div>
+    ${sig.status === 'Warning' ? `<div class="warning-bar">⚠️ ${sig.warningReason || 'Price moving against trade'}</div>` : ''}
     <div class="card-footer">
       <span class="card-time">${sig.dateStr} · ${sig.timeStr}</span>
       <a href="${getTVUrl(sig)}" target="_blank" onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3b82f6;text-decoration:none;padding:3px 8px;border:1px solid rgba(59,130,246,0.3);border-radius:4px;">📈 Chart</a>
@@ -509,7 +569,7 @@ function renderCard(sig, isNew=false) {
 
 function renderGrid() {
   const grid=document.getElementById('signalGrid');
-  const active=getFiltered().filter(s=>(s.status||'Active').toLowerCase()==='active');
+  const active=getFiltered().filter(s=>{const st=(s.status||'Active').toLowerCase();return st==='active'||st==='warning';});
   grid.querySelectorAll('.signal-card').forEach(c=>c.remove());
   document.getElementById('emptyActive').style.display=active.length?'none':'block';
   document.getElementById('activeCount').textContent=active.length+' Live';
