@@ -657,6 +657,14 @@ function connectSSE() {
 
   eventSource.addEventListener('connected', () => { setStatus('live'); });
 
+  // Calendar data arrives as a dedicated SSE event
+  eventSource.addEventListener('calendar', (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      if (typeof window._ecProcessData === 'function') window._ecProcessData(data);
+    } catch(err) { console.error('[SSE] calendar parse error', err); }
+  });
+
   eventSource.addEventListener('history', (e) => {
     try {
       allSignals = JSON.parse(e.data).map(normalize);
@@ -927,9 +935,8 @@ if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBt
 
 // ─── ECONOMIC CALENDAR INTELLIGENCE ──────────────────────────────────────────
 (function(){
-  // Fetch from SSE server's /calendar endpoint (same origin, no CORS issues)
-  var SSE_BASE = 'https://tradewithvic.com.ngrok.dev';
-  var CALENDAR_ENDPOINT = SSE_BASE + '/calendar';
+  // Calendar data comes via SSE 'calendar' event from the signal server
+  // Fallback: fetch from /calendar endpoint if SSE hasn't delivered yet
 
   var ecEvents=[], ecLoaded=false;
   var fTime='today', fImpact='all', fCurrency='all';
@@ -1092,25 +1099,28 @@ if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBt
     };
   }
 
-  // ── Fetch calendar data from SSE server
+  // ── Process raw calendar data from any source (exposed globally for SSE handler)
+  function processCalendarData(allRaw){
+    if(!Array.isArray(allRaw)||!allRaw.length) return;
+    ecEvents=allRaw.filter(function(e){return e.impact!=='Holiday';}).map(analyzeEvent).filter(Boolean).sort(function(a,b){return a.time-b.time;});
+    ecLoaded=true;
+    renderAll();
+    console.log('[EC] Loaded '+ecEvents.length+' events');
+  }
+
+  // ── Fetch calendar data from server endpoint (fallback)
   function fetchCalendar(){
     var el=document.getElementById('ecEventsList');
     if(!ecLoaded) el.innerHTML='<div class="ec-empty-state">Fetching economic calendar...</div>';
-    fetch(CALENDAR_ENDPOINT).then(function(r){
+    var base=SSE_URL.replace('/events','');
+    fetch(base+'/calendar').then(function(r){
       if(!r.ok) throw new Error('HTTP '+r.status);
       return r.json();
-    }).then(function(allRaw){
-      if(!Array.isArray(allRaw)||!allRaw.length){
-        if(!ecLoaded) el.innerHTML='<div class="ec-empty-state">No calendar data available yet. Retrying...</div>';
-        return;
-      }
-      ecEvents=allRaw.filter(function(e){return e.impact!=='Holiday';}).map(analyzeEvent).filter(Boolean).sort(function(a,b){return a.time-b.time;});
-      ecLoaded=true;
-      renderAll();
-      console.log('[EC] Loaded '+ecEvents.length+' events');
+    }).then(function(data){
+      processCalendarData(data);
     }).catch(function(err){
-      console.error('[EC]',err);
-      if(!ecLoaded) el.innerHTML='<div class="ec-empty-state">Calendar connecting... Retrying in 1 min</div>';
+      console.log('[EC] /calendar fallback failed:',err.message);
+      if(!ecLoaded) el.innerHTML='<div class="ec-empty-state">Waiting for calendar data via live feed...</div>';
     });
   }
 
@@ -1398,21 +1408,8 @@ if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBt
     if(ecLoaded) renderAll();
   },60000);
 
-  // ── SSE listener for bot broadcasts
-  setTimeout(function(){
-    if(!eventSource) return;
-    eventSource.addEventListener('message',function(ev){
-      try{
-        var d=JSON.parse(ev.data);
-        if(d.type==='economic_calendar'&&d.events){
-          ecEvents=d.events.map(function(e){return Object.assign({},e,{time:new Date(e.time),tag:e.volatilityTag||e.tag,flag:FLAGS[e.currency]||'\ud83c\udff3\ufe0f',session:getSession(new Date(e.time))});});
-          ecEvents.sort(function(a,b){return a.time-b.time;});
-          ecLoaded=true;
-          renderAll();
-        }
-      }catch(err){}
-    });
-  },3000);
+  // ── Expose processCalendarData globally so the SSE handler in connectSSE() can call it
+  window._ecProcessData = processCalendarData;
 
   // ── Init
   fetchCalendar();
