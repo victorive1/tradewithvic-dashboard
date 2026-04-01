@@ -927,15 +927,9 @@ if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBt
 
 // ─── ECONOMIC CALENDAR INTELLIGENCE ──────────────────────────────────────────
 (function(){
-  var CALENDAR_URLS = [
-    'https://nfs.faireconomy.media/ff_calendar_thisweek.json',
-    'https://nfs.faireconomy.media/ff_calendar_nextweek.json'
-  ];
-  var CORS_PROXIES = [
-    'https://api.allorigins.win/raw?url=',
-    'https://corsproxy.io/?',
-    'https://api.codetabs.com/v1/proxy?quest='
-  ];
+  // Fetch from SSE server's /calendar endpoint (same origin, no CORS issues)
+  var SSE_BASE = 'https://tradewithvic.com.ngrok.dev';
+  var CALENDAR_ENDPOINT = SSE_BASE + '/calendar';
 
   var ecEvents=[], ecLoaded=false;
   var fTime='today', fImpact='all', fCurrency='all';
@@ -1098,47 +1092,25 @@ if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBt
     };
   }
 
-  // ── CORS proxy fetch chain
-  function fetchWithProxy(url){
-    return fetch(url,{mode:'cors'}).then(function(r){if(r.ok)return r.json();throw new Error();}).catch(function(){
-      var chain=Promise.reject();
-      CORS_PROXIES.forEach(function(proxy){
-        chain=chain.catch(function(){
-          return fetch(proxy+encodeURIComponent(url)).then(function(r){
-            if(!r.ok) throw new Error();
-            return r.json().then(function(data){
-              if(Array.isArray(data)) return data;
-              if(data.contents) return JSON.parse(data.contents);
-              return data;
-            });
-          });
-        });
-      });
-      return chain;
-    });
-  }
-
-  // ── Fetch calendar data
+  // ── Fetch calendar data from SSE server
   function fetchCalendar(){
     var el=document.getElementById('ecEventsList');
     if(!ecLoaded) el.innerHTML='<div class="ec-empty-state">Fetching economic calendar...</div>';
-    var fetches=CALENDAR_URLS.map(function(url){return fetchWithProxy(url).catch(function(){return [];});});
-    Promise.all(fetches).then(function(results){
-      var allRaw=[];
-      results.forEach(function(r){if(Array.isArray(r))allRaw=allRaw.concat(r);});
-      if(!allRaw.length){
-        el.innerHTML='<div class="ec-empty-state">Could not load calendar. Retrying...</div>';
+    fetch(CALENDAR_ENDPOINT).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    }).then(function(allRaw){
+      if(!Array.isArray(allRaw)||!allRaw.length){
+        if(!ecLoaded) el.innerHTML='<div class="ec-empty-state">No calendar data available yet. Retrying...</div>';
         return;
       }
-      var seen={};
-      var unique=allRaw.filter(function(e){var k=e.title+'|'+e.date;if(seen[k])return false;seen[k]=1;return true;});
-      ecEvents=unique.filter(function(e){return e.impact!=='Holiday';}).map(analyzeEvent).filter(Boolean).sort(function(a,b){return a.time-b.time;});
+      ecEvents=allRaw.filter(function(e){return e.impact!=='Holiday';}).map(analyzeEvent).filter(Boolean).sort(function(a,b){return a.time-b.time;});
       ecLoaded=true;
       renderAll();
       console.log('[EC] Loaded '+ecEvents.length+' events');
     }).catch(function(err){
       console.error('[EC]',err);
-      if(!ecLoaded) el.innerHTML='<div class="ec-empty-state">Calendar unavailable. Retrying in 1 min...</div>';
+      if(!ecLoaded) el.innerHTML='<div class="ec-empty-state">Calendar connecting... Retrying in 1 min</div>';
     });
   }
 
