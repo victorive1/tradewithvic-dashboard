@@ -230,7 +230,7 @@ else {
 
   <div class="conn-banner" id="connBanner">⚠ Lost connection to signal server — attempting to reconnect...</div>
 
-  <div class="stats-bar">
+  <div class="stats-bar" id="statsBar" style="display:none">
     <div class="stat-pill"><div class="label">Active</div><div class="value gold"  id="st-active">0</div></div>
     <div class="stat-pill"><div class="label">Win Rate</div><div class="value green" id="st-wr">—</div></div>
     <div class="stat-pill"><div class="label">TP1 Hits</div><div class="value green" id="st-tp1">0</div></div>
@@ -699,7 +699,10 @@ function updateClock() {
 }
 updateClock(); setInterval(updateClock, 1000);
 connectSSE();
-if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBtn').style.display='flex';
+if(localStorage.getItem('vs_isAdmin')==='true'){
+  document.getElementById('adminBtn').style.display='flex';
+  document.getElementById('statsBar').style.display='';
+}
 
 // Calendar moved to /calendar.html
 </script>
