@@ -781,8 +781,17 @@ if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBt
 
 // ─── ECONOMIC CALENDAR INTELLIGENCE ──────────────────────────────────────────
 (function(){
-  const CALENDAR_URL = 'https://nfs.faireconomy.media/ff_calendar_thisweek.json';
-  let ecEvents = [], ecFilter = 'all';
+  const CALENDAR_URLS = [
+    'https://nfs.faireconomy.media/ff_calendar_thisweek.json',
+    'https://nfs.faireconomy.media/ff_calendar_nextweek.json'
+  ];
+  // CORS proxies — try multiple in case one is down
+  const CORS_PROXIES = [
+    'https://api.allorigins.win/raw?url=',
+    'https://corsproxy.io/?',
+    'https://api.codetabs.com/v1/proxy?quest='
+  ];
+  let ecEvents = [], ecFilter = 'all', ecLoaded = false;
 
   // Known high-impact event volatility profiles
   const VOL_MAP = {
@@ -822,7 +831,7 @@ if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBt
     const v=matchVol(e.title);
     if(v){if(v.pips>=60)s+=30;else if(v.pips>=40)s+=20;else s+=10;}
     if(e.forecast&&e.previous){
-      const fc=parseFloat(e.forecast.replace(/[%KkMmBb,]/g,'')),pv=parseFloat(e.previous.replace(/[%KkMmBb,]/g,''));
+      const fc=parseFloat(String(e.forecast).replace(/[%KkMmBb,]/g,'')),pv=parseFloat(String(e.previous).replace(/[%KkMmBb,]/g,''));
       if(!isNaN(fc)&&!isNaN(pv)&&pv!==0){const d=Math.abs((fc-pv)/pv)*100;if(d>=50)s+=20;else if(d>=20)s+=15;else if(d>=10)s+=10;else if(d>=5)s+=5;}
     }
     if(/speaks|speech|testimony|press conference|symposium/i.test(e.title))s+=10;
@@ -834,6 +843,7 @@ if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBt
     const score=scoreEvent(e);
     const tag=score>=75?'extreme':score>=55?'high':score>=35?'moderate':'low';
     const t=new Date(e.date);
+    if(isNaN(t.getTime())) return null;
     const v=matchVol(e.title);
     return{
       title:e.title,currency:e.country,time:t,
@@ -846,13 +856,60 @@ if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBt
     };
   }
 
-  async function fetchCalendar(){
+  // Fetch with CORS proxy fallback chain
+  async function fetchWithProxy(url){
+    // Try direct first (works if server allows CORS)
     try{
-      const r=await fetch(CALENDAR_URL);
-      const raw=await r.json();
-      ecEvents=raw.filter(e=>e.impact!=='Holiday').map(analyzeEvent).sort((a,b)=>a.time-b.time);
+      const r=await fetch(url,{mode:'cors'});
+      if(r.ok) return await r.json();
+    }catch(e){console.log('[EC] Direct fetch blocked, trying proxies...');}
+    // Try each CORS proxy
+    for(const proxy of CORS_PROXIES){
+      try{
+        const r=await fetch(proxy+encodeURIComponent(url),{signal:AbortSignal.timeout(8000)});
+        if(r.ok){
+          const data=await r.json();
+          if(Array.isArray(data)) return data;
+          // allorigins wraps in {contents:...}
+          if(data.contents) return JSON.parse(data.contents);
+          return data;
+        }
+      }catch(e){console.log('[EC] Proxy failed:',proxy);}
+    }
+    throw new Error('All calendar sources failed');
+  }
+
+  async function fetchCalendar(){
+    const el=document.getElementById('ecEventsList');
+    if(!ecLoaded) el.innerHTML='<div class="ec-empty-state">Fetching calendar data...</div>';
+    try{
+      let allRaw=[];
+      for(const url of CALENDAR_URLS){
+        try{
+          const data=await fetchWithProxy(url);
+          if(Array.isArray(data)) allRaw=allRaw.concat(data);
+        }catch(e){console.warn('[EC] Failed to fetch:',url);}
+      }
+      if(!allRaw.length){
+        el.innerHTML='<div class="ec-empty-state">Could not load calendar data. Retrying...</div>';
+        return;
+      }
+      // Deduplicate by title+date
+      const seen=new Set();
+      const unique=allRaw.filter(e=>{
+        const key=e.title+e.date;
+        if(seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      ecEvents=unique.filter(e=>e.impact!=='Holiday').map(analyzeEvent).filter(Boolean).sort((a,b)=>a.time-b.time);
+      ecLoaded=true;
       renderCalendar();
-    }catch(err){console.error('[EC]',err);}
+      console.log('[EC] Loaded',ecEvents.length,'events');
+    }catch(err){
+      console.error('[EC]',err);
+      if(!ecLoaded) el.innerHTML='<div class="ec-empty-state">Calendar unavailable — retrying in 1 min</div>';
+    }
   }
 
   function filterEC(events){
@@ -870,7 +927,8 @@ if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBt
     document.getElementById('ecHigh').textContent=ecEvents.filter(e=>e.score>=55).length;
     const next=ecEvents.find(e=>e.time>now);
     if(next){const d=next.time-now,h=Math.floor(d/3600000),m=Math.floor((d%3600000)/60000);
-      document.getElementById('ecNext').textContent=h>0?h+'h '+m+'m':m+'m';}
+      document.getElementById('ecNext').textContent=h>0?h+'h '+m+'m':m+'m';
+    }else{document.getElementById('ecNext').textContent='—';}
 
     if(!filtered.length){list.innerHTML='<div class="ec-empty-state">No events match filter</div>';return;}
 
@@ -879,75 +937,74 @@ if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBt
 
     let html='';
     for(const[day,evts] of Object.entries(groups)){
-      html+=`<div class="ec-day-hdr">${day}</div>`;
+      html+='<div class="ec-day-hdr">'+day+'</div>';
       evts.forEach(e=>{
         const past=e.time<now;
         const soon=!past&&(e.time-now)<1800000;
         const col=e.tag==='extreme'?'var(--accent-red)':e.tag==='high'?'var(--accent-amber)':e.tag==='moderate'?'var(--accent-gold)':'var(--accent-green)';
-        html+=`<div class="ec-evt ec-${e.tag}${past?' ec-past':''}" onclick="this.classList.toggle('expanded')">
-          <div class="ec-evt-top">
-            <span class="ec-evt-cur">${e.currency}</span>
-            <span>${soon?'<span class="ec-countdown-tag">SOON </span>':''}<span class="ec-evt-time">${e.timeLocal}</span></span>
-          </div>
-          <div class="ec-evt-title">${e.title}</div>
-          <div class="ec-evt-row">
-            <span class="ec-badge ec-${e.tag}">${e.tag.toUpperCase()}</span>
-            <span>Score: ${e.score}</span>
-            ${e.pips?`<span>~${e.pips}p</span>`:''}
-          </div>
-          <div class="ec-score-track"><div class="ec-score-bar-fill" style="width:${e.score}%;background:${col}"></div></div>
-          <div class="ec-evt-details">
-            <div class="ec-det-row"><span class="ec-dk">Forecast</span><span class="ec-dv">${e.forecast}</span></div>
-            <div class="ec-det-row"><span class="ec-dk">Previous</span><span class="ec-dv">${e.previous}</span></div>
-            ${e.pips?`<div class="ec-det-row"><span class="ec-dk">Avg Move</span><span class="ec-dv">~${e.pips} pips</span></div>`:''}
-            ${e.dur?`<div class="ec-det-row"><span class="ec-dk">Duration</span><span class="ec-dv">${e.dur}</span></div>`:''}
-            ${e.pairs.length?`<div style="margin-top:6px"><span class="ec-dk">Affected Pairs</span><div class="ec-pairs-wrap">${e.pairs.map(p=>`<span class="ec-pair-chip">${p}</span>`).join('')}</div></div>`:''}
-          </div>
-        </div>`;
+        html+='<div class="ec-evt ec-'+e.tag+(past?' ec-past':'')+'" onclick="this.classList.toggle(\'expanded\')">'
+          +'<div class="ec-evt-top">'
+            +'<span class="ec-evt-cur">'+e.currency+'</span>'
+            +'<span>'+(soon?'<span class="ec-countdown-tag">SOON </span>':'')+'<span class="ec-evt-time">'+e.timeLocal+'</span></span>'
+          +'</div>'
+          +'<div class="ec-evt-title">'+e.title+'</div>'
+          +'<div class="ec-evt-row">'
+            +'<span class="ec-badge ec-'+e.tag+'">'+e.tag.toUpperCase()+'</span>'
+            +'<span>Score: '+e.score+'</span>'
+            +(e.pips?'<span>~'+e.pips+'p</span>':'')
+          +'</div>'
+          +'<div class="ec-score-track"><div class="ec-score-bar-fill" style="width:'+e.score+'%;background:'+col+'"></div></div>'
+          +'<div class="ec-evt-details">'
+            +'<div class="ec-det-row"><span class="ec-dk">Forecast</span><span class="ec-dv">'+e.forecast+'</span></div>'
+            +'<div class="ec-det-row"><span class="ec-dk">Previous</span><span class="ec-dv">'+e.previous+'</span></div>'
+            +(e.pips?'<div class="ec-det-row"><span class="ec-dk">Avg Move</span><span class="ec-dv">~'+e.pips+' pips</span></div>':'')
+            +(e.dur?'<div class="ec-det-row"><span class="ec-dk">Duration</span><span class="ec-dv">'+e.dur+'</span></div>':'')
+            +(e.pairs.length?'<div style="margin-top:6px"><span class="ec-dk">Affected Pairs</span><div class="ec-pairs-wrap">'+e.pairs.map(function(p){return '<span class="ec-pair-chip">'+p+'</span>';}).join('')+'</div></div>':'')
+          +'</div>'
+        +'</div>';
       });
     }
     list.innerHTML=html;
   }
 
   // Filter buttons
-  document.querySelectorAll('.ec-fbtn').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      document.querySelectorAll('.ec-fbtn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.ec-fbtn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      document.querySelectorAll('.ec-fbtn').forEach(function(b){b.classList.remove('active');});
       btn.classList.add('active');
       ecFilter=btn.dataset.ecf;
       renderCalendar();
     });
   });
 
-  // Countdown refresh
-  setInterval(()=>{
-    const now=new Date(),next=ecEvents.find(e=>e.time>now);
+  // Countdown refresh every minute
+  setInterval(function(){
+    const now=new Date(),next=ecEvents.find(function(e){return e.time>now;});
     if(next){const d=next.time-now,h=Math.floor(d/3600000),m=Math.floor((d%3600000)/60000);
       document.getElementById('ecNext').textContent=h>0?h+'h '+m+'m':m+'m';}
+    // Re-render to update past/soon states
+    if(ecLoaded) renderCalendar();
   },60000);
 
-  // SSE: listen for calendar broadcasts from the bot
-  // The existing SSE connection handles signal events; we also check for calendar data
-  const origOnMessage = eventSource ? eventSource.onmessage : null;
-  function patchSSE(){
+  // Listen for calendar data from SSE bot broadcasts
+  function listenForCalendarSSE(){
     if(!eventSource) return;
-    const origHandler = eventSource.onmessage;
     eventSource.addEventListener('message', function(e){
       try{
-        const d=JSON.parse(e.data);
+        var d=JSON.parse(e.data);
         if(d.type==='economic_calendar'&&d.events){
-          ecEvents=d.events.map(ev=>({...ev,time:new Date(ev.time),tag:ev.volatilityTag||ev.tag}));
-          ecEvents.sort((a,b)=>a.time-b.time);
+          ecEvents=d.events.map(function(ev){return Object.assign({},ev,{time:new Date(ev.time),tag:ev.volatilityTag||ev.tag});});
+          ecEvents.sort(function(a,b){return a.time-b.time;});
+          ecLoaded=true;
           renderCalendar();
         }
       }catch(err){}
     });
   }
-  // Patch after SSE connects
-  setTimeout(patchSSE, 2000);
-  // Also re-patch on reconnect
-  const origConnect = connectSSE;
-  // Direct fetch as primary source
+  // Wait for SSE to connect, then listen
+  setTimeout(listenForCalendarSSE, 3000);
+
+  // Fetch calendar data immediately and refresh every 15 min
   fetchCalendar();
   setInterval(fetchCalendar, 15*60*1000);
 })();
