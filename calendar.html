@@ -628,37 +628,94 @@ function processEvents(raw) {
   }).filter(Boolean).sort(function(a, b) { return a._date - b._date; });
 }
 
+/* ====== LOCAL CACHE (instant load) ====== */
+const CACHE_KEY = 'ec_calendar_cache';
+const CACHE_TS_KEY = 'ec_calendar_ts';
+const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+
+function saveToCache(raw) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(raw));
+    localStorage.setItem(CACHE_TS_KEY, String(Date.now()));
+  } catch(e) { /* quota exceeded — non-fatal */ }
+}
+
+function loadFromCache() {
+  try {
+    var cached = localStorage.getItem(CACHE_KEY);
+    if (!cached) return null;
+    var data = JSON.parse(cached);
+    if (!Array.isArray(data) || data.length === 0) return null;
+    return data;
+  } catch(e) { return null; }
+}
+
+function cacheAge() {
+  var ts = parseInt(localStorage.getItem(CACHE_TS_KEY) || '0', 10);
+  return Date.now() - ts;
+}
+
+function isCacheStale() {
+  return cacheAge() > CACHE_TTL;
+}
+
 /* ====== DATA FETCHING ====== */
-async function fetchCalendarData() {
+var fetchInProgress = false;
+
+async function fetchCalendarData(silent) {
+  if (fetchInProgress) return null;
+  fetchInProgress = true;
+  if (!silent) console.log('[EC] Fetching fresh calendar data...');
+
+  var data = null;
+
   // PRIMARY: SSE server endpoint
   try {
-    const token = localStorage.getItem('vs_token');
-    const headers = {};
+    var token = localStorage.getItem('vs_token');
+    var headers = {};
     if (token) headers['x-session-token'] = token;
-    const resp = await fetch(CALENDAR_API, { headers: headers });
+    var resp = await fetch(CALENDAR_API, { headers: headers, signal: AbortSignal.timeout(8000) });
     if (resp.ok) {
-      const data = await resp.json();
-      if (Array.isArray(data) && data.length > 0) return data;
+      var d = await resp.json();
+      if (Array.isArray(d) && d.length > 0) data = d;
     }
   } catch (e) {
-    console.log('Primary calendar fetch failed:', e.message);
+    if (!silent) console.log('[EC] Primary fetch failed:', e.message);
   }
 
   // FALLBACK: CORS proxies
-  for (const proxy of CORS_PROXIES) {
-    try {
-      const url = proxy + encodeURIComponent(FAIR_ECONOMY_URL);
-      const resp = await fetch(url);
-      if (resp.ok) {
-        const data = await resp.json();
-        if (Array.isArray(data) && data.length > 0) return data;
+  if (!data) {
+    for (var i = 0; i < CORS_PROXIES.length; i++) {
+      try {
+        var url = CORS_PROXIES[i] + encodeURIComponent(FAIR_ECONOMY_URL);
+        var resp2 = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        if (resp2.ok) {
+          var d2 = await resp2.json();
+          if (Array.isArray(d2) && d2.length > 0) { data = d2; break; }
+        }
+      } catch (e) {
+        if (!silent) console.log('[EC] Proxy failed:', CORS_PROXIES[i]);
       }
-    } catch (e) {
-      console.log('CORS proxy failed:', proxy, e.message);
     }
   }
 
-  return [];
+  fetchInProgress = false;
+
+  if (data && data.length > 0) {
+    saveToCache(data);
+    return data;
+  }
+  return null;
+}
+
+/* ====== BACKGROUND REFRESH ====== */
+async function backgroundRefresh() {
+  var raw = await fetchCalendarData(true);
+  if (raw && raw.length > 0) {
+    allEvents = processEvents(raw);
+    applyFilters();
+    console.log('[EC] Background refresh: ' + allEvents.length + ' events');
+  }
 }
 
 /* ====== SSE CONNECTION ====== */
@@ -670,10 +727,12 @@ function connectSSE() {
     sseSource = new EventSource(url);
     sseSource.addEventListener('calendar', function(e) {
       try {
-        const data = JSON.parse(e.data);
+        var data = JSON.parse(e.data);
         if (Array.isArray(data) && data.length > 0) {
+          saveToCache(data);
           allEvents = processEvents(data);
           applyFilters();
+          console.log('[EC] SSE push: ' + allEvents.length + ' events');
         }
       } catch (err) {
         console.log('SSE calendar parse error:', err);
@@ -983,26 +1042,42 @@ async function init() {
   updateSession();
   updateTimezone();
 
-  // Fetch data
-  var raw = await fetchCalendarData();
-  if (raw && raw.length > 0) {
-    allEvents = processEvents(raw);
+  // 1) INSTANT LOAD from cache (no waiting)
+  var cached = loadFromCache();
+  if (cached) {
+    allEvents = processEvents(cached);
+    applyFilters();
+    console.log('[EC] Loaded ' + allEvents.length + ' events from cache (age: ' + Math.round(cacheAge()/1000) + 's)');
   }
 
-  // Apply default filter (this week)
-  applyFilters();
+  // 2) Fetch fresh data in background (don't block UI)
+  if (!cached || isCacheStale()) {
+    fetchCalendarData(false).then(function(raw) {
+      if (raw && raw.length > 0) {
+        allEvents = processEvents(raw);
+        applyFilters();
+        console.log('[EC] Fresh data loaded: ' + allEvents.length + ' events');
+      } else if (!cached) {
+        // Nothing cached AND fetch failed — show retry message
+        document.getElementById('loadingState').innerHTML =
+          '<p style="color:var(--text-muted);font-family:\'Space Mono\',monospace;font-size:12px;">Calendar data unavailable. Retrying...</p>';
+      }
+    });
+  } else {
+    // Cache is fresh — hide loading
+    document.getElementById('loadingState').style.display = 'none';
+  }
 
-  // Start countdown
+  // 3) Start countdown (ticks every second)
   updateCountdown();
   countdownInterval = setInterval(function() {
     updateCountdown();
-    // Refresh statuses every second
     for (var i = 0; i < allEvents.length; i++) {
       allEvents[i]._status = getEventStatus(allEvents[i]._date);
     }
   }, 1000);
 
-  // Refresh render every 60 seconds to update statuses visually
+  // 4) Re-render every 60s to update statuses, risk meter, trade notes
   setInterval(function() {
     for (var i = 0; i < allEvents.length; i++) {
       allEvents[i]._status = getEventStatus(allEvents[i]._date);
@@ -1011,8 +1086,27 @@ async function init() {
     applyFilters();
   }, 60000);
 
-  // Connect SSE for live updates
+  // 5) Background data refresh every 10 minutes
+  setInterval(backgroundRefresh, 10 * 60 * 1000);
+
+  // 6) Connect SSE for live updates (instant push from server)
   connectSSE();
+
+  // 7) Also refresh when tab becomes visible (user switches back)
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') {
+      // Update statuses immediately
+      for (var i = 0; i < allEvents.length; i++) {
+        allEvents[i]._status = getEventStatus(allEvents[i]._date);
+      }
+      updateCountdown();
+      updateRiskMeter();
+      updateSession();
+      applyFilters();
+      // Refresh data if cache is stale
+      if (isCacheStale()) backgroundRefresh();
+    }
+  });
 }
 
 init();
