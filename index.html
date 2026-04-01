@@ -49,7 +49,8 @@
   *{margin:0;padding:0;box-sizing:border-box;}
   body{font-family:'DM Sans',sans-serif;background:var(--bg-void);color:var(--text-primary);min-height:100vh;overflow-x:hidden;}
   body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 60% 40% at 20% 10%,rgba(245,200,66,0.04) 0%,transparent 60%),radial-gradient(ellipse 40% 50% at 80% 80%,rgba(77,166,255,0.04) 0%,transparent 60%);pointer-events:none;z-index:0;}
-  .layout{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:0 20px 60px;}
+  .page-wrap{display:flex;position:relative;z-index:1;max-width:1720px;margin:0 auto;}
+  .layout{flex:1;min-width:0;padding:0 20px 60px;}
   .header{display:flex;align-items:center;justify-content:space-between;padding:24px 0 20px;border-bottom:1px solid var(--border-subtle);margin-bottom:24px;flex-wrap:wrap;gap:12px;}
   .header-left{display:flex;align-items:center;gap:16px;}
   .logo-mark{width:40px;height:40px;background:linear-gradient(135deg,var(--accent-gold),#e8a000);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:#080a0f;flex-shrink:0;}
@@ -191,6 +192,57 @@
   ::-webkit-scrollbar{width:4px;height:4px;}
   ::-webkit-scrollbar-track{background:transparent;}
   ::-webkit-scrollbar-thumb{background:var(--border-mid);border-radius:2px;}
+
+  /* ─── Economic Calendar Sidebar ─── */
+  .ec-sidebar{width:320px;flex-shrink:0;background:var(--bg-deep);border-left:1px solid var(--border-subtle);height:100vh;position:sticky;top:0;overflow-y:auto;display:flex;flex-direction:column;transition:transform 0.3s;}
+  .ec-sidebar.collapsed{width:0;overflow:hidden;border:none;}
+  .ec-toggle{position:fixed;right:320px;top:50%;transform:translateY(-50%);z-index:50;background:var(--bg-card);border:1px solid var(--border-mid);border-right:none;border-radius:var(--radius-sm) 0 0 var(--radius-sm);padding:8px 4px;cursor:pointer;color:var(--text-secondary);font-size:14px;transition:all 0.3s;display:flex;align-items:center;}
+  .ec-toggle:hover{color:var(--text-primary);background:var(--bg-card-hover);}
+  .ec-toggle.collapsed{right:0;}
+  .ec-header-bar{padding:16px;border-bottom:1px solid var(--border-subtle);position:sticky;top:0;background:var(--bg-deep);z-index:10;}
+  .ec-header-bar h2{margin:0 0 2px;font-family:'Syne',sans-serif;font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;color:var(--text-primary);}
+  .ec-header-bar .ec-sub{font-size:10px;color:var(--text-muted);font-family:'Space Mono',monospace;}
+  .ec-live-indicator{width:7px;height:7px;background:var(--accent-green);border-radius:50%;box-shadow:var(--glow-green);animation:pulse-dot 2s infinite;display:inline-block;}
+  .ec-filters-bar{padding:8px 16px;display:flex;gap:5px;flex-wrap:wrap;border-bottom:1px solid var(--border-subtle);}
+  .ec-fbtn{padding:3px 9px;border-radius:100px;border:1px solid var(--border-subtle);background:transparent;color:var(--text-muted);font-size:10px;font-family:'Space Mono',monospace;cursor:pointer;transition:all 0.2s;}
+  .ec-fbtn:hover{border-color:var(--accent-gold);color:var(--text-primary);}
+  .ec-fbtn.active{background:var(--accent-gold);color:#080a0f;border-color:var(--accent-gold);font-weight:700;}
+  .ec-stats-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 16px;border-bottom:1px solid var(--border-subtle);}
+  .ec-stat-box{text-align:center;}
+  .ec-stat-box .ec-sv{font-size:18px;font-weight:700;font-family:'Syne',sans-serif;}
+  .ec-stat-box .ec-sl{font-size:9px;color:var(--text-muted);font-family:'Space Mono',monospace;text-transform:uppercase;}
+  .ec-day-hdr{padding:10px 16px 4px;font-size:10px;font-weight:700;color:var(--accent-gold);font-family:'Space Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;}
+  .ec-events-list{padding:0 12px 16px;flex:1;}
+  .ec-evt{background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:10px 12px;margin-bottom:8px;border-left:3px solid var(--accent-green);transition:all 0.2s;cursor:pointer;}
+  .ec-evt:hover{border-color:var(--border-mid);transform:translateX(2px);}
+  .ec-evt.ec-extreme{border-left-color:var(--accent-red);}
+  .ec-evt.ec-high{border-left-color:var(--accent-amber);}
+  .ec-evt.ec-moderate{border-left-color:var(--accent-gold);}
+  .ec-evt.ec-low{border-left-color:var(--accent-green);}
+  .ec-evt.ec-past{opacity:0.45;}
+  .ec-evt-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+  .ec-evt-cur{font-size:10px;font-weight:700;font-family:'Space Mono',monospace;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.06);}
+  .ec-evt-time{font-size:10px;color:var(--text-muted);font-family:'Space Mono',monospace;}
+  .ec-evt-title{font-size:12px;font-weight:600;margin-bottom:5px;line-height:1.3;color:var(--text-primary);}
+  .ec-evt-row{display:flex;gap:10px;font-size:10px;color:var(--text-muted);font-family:'Space Mono',monospace;align-items:center;}
+  .ec-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:0.3px;}
+  .ec-badge.ec-extreme{background:rgba(255,77,109,0.15);color:var(--accent-red);}
+  .ec-badge.ec-high{background:rgba(255,159,67,0.15);color:var(--accent-amber);}
+  .ec-badge.ec-moderate{background:rgba(245,200,66,0.12);color:var(--accent-gold);}
+  .ec-badge.ec-low{background:rgba(0,214,143,0.1);color:var(--accent-green);}
+  .ec-score-track{height:3px;background:rgba(255,255,255,0.06);border-radius:2px;margin-top:6px;overflow:hidden;}
+  .ec-score-bar-fill{height:100%;border-radius:2px;transition:width 0.5s;}
+  .ec-evt-details{display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--border-subtle);font-size:11px;}
+  .ec-evt.expanded .ec-evt-details{display:block;}
+  .ec-det-row{display:flex;justify-content:space-between;padding:3px 0;font-family:'Space Mono',monospace;font-size:10px;}
+  .ec-det-row .ec-dk{color:var(--text-muted);}
+  .ec-det-row .ec-dv{color:var(--text-primary);font-weight:600;}
+  .ec-pairs-wrap{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+  .ec-pair-chip{font-size:9px;font-family:'Space Mono',monospace;padding:2px 6px;border-radius:4px;background:var(--bg-void);border:1px solid var(--border-subtle);color:var(--text-muted);}
+  .ec-countdown-tag{font-size:9px;color:var(--accent-red);font-weight:700;font-family:'Space Mono',monospace;animation:pulse-dot 1.5s infinite;}
+  .ec-empty-state{padding:40px 16px;text-align:center;color:var(--text-muted);font-size:12px;font-family:'Space Mono',monospace;}
+  @media(max-width:1100px){.ec-sidebar{position:fixed;right:0;top:0;z-index:100;box-shadow:-4px 0 20px rgba(0,0,0,0.3);}.ec-toggle{position:fixed;}}
+  @media(max-width:768px){.ec-sidebar{width:280px;}}
 </style>
 </head>
 <body>
@@ -204,6 +256,7 @@ else {
     .then(r => r.json()).then(d => { if(!d.ok) { localStorage.clear(); window.location.href = '/login.html'; } });
 }
 </script>
+<div class="page-wrap">
 <div class="layout">
   <header class="header">
     <div class="header-left">
@@ -362,6 +415,34 @@ else {
     <div class="modal-body" id="modalBody"></div>
   </div>
 </div>
+
+<!-- Economic Calendar Sidebar -->
+<button class="ec-toggle" id="ecToggle" onclick="toggleCalendar()" title="Toggle Economic Calendar">📅</button>
+<aside class="ec-sidebar" id="ecSidebar">
+  <div class="ec-header-bar">
+    <h2><span class="ec-live-indicator"></span> Economic Calendar</h2>
+    <div class="ec-sub">FX News Intelligence</div>
+  </div>
+  <div class="ec-filters-bar" id="ecFilters">
+    <button class="ec-fbtn active" data-ecf="all">All</button>
+    <button class="ec-fbtn" data-ecf="extreme">Extreme</button>
+    <button class="ec-fbtn" data-ecf="high">High</button>
+    <button class="ec-fbtn" data-ecf="moderate">Mid</button>
+    <button class="ec-fbtn" data-ecf="usd">USD</button>
+    <button class="ec-fbtn" data-ecf="eur">EUR</button>
+    <button class="ec-fbtn" data-ecf="gbp">GBP</button>
+    <button class="ec-fbtn" data-ecf="jpy">JPY</button>
+  </div>
+  <div class="ec-stats-bar">
+    <div class="ec-stat-box"><div class="ec-sv" id="ecTotal">—</div><div class="ec-sl">Events</div></div>
+    <div class="ec-stat-box"><div class="ec-sv" id="ecHigh" style="color:var(--accent-red)">—</div><div class="ec-sl">High Impact</div></div>
+    <div class="ec-stat-box"><div class="ec-sv" id="ecNext">—</div><div class="ec-sl">Next Event</div></div>
+  </div>
+  <div class="ec-events-list" id="ecEventsList">
+    <div class="ec-empty-state">Loading calendar data...</div>
+  </div>
+</aside>
+</div><!-- /page-wrap -->
 
 <script>
 // ─── ONE THING TO CHANGE AFTER RAILWAY DEPLOYS ────────────────────────────────
@@ -697,6 +778,194 @@ function updateClock() {
 updateClock(); setInterval(updateClock, 1000);
 connectSSE();
 if(localStorage.getItem('vs_isAdmin')==='true') document.getElementById('adminBtn').style.display='flex';
+
+// ─── ECONOMIC CALENDAR INTELLIGENCE ──────────────────────────────────────────
+(function(){
+  const CALENDAR_URL = 'https://nfs.faireconomy.media/ff_calendar_thisweek.json';
+  let ecEvents = [], ecFilter = 'all';
+
+  // Known high-impact event volatility profiles
+  const VOL_MAP = {
+    'Non-Farm Employment Change':{pips:80,dur:'2-4h'},'Unemployment Rate':{pips:40,dur:'1-2h'},
+    'CPI m/m':{pips:50,dur:'1-3h'},'CPI y/y':{pips:55,dur:'1-3h'},'Core CPI m/m':{pips:50,dur:'1-3h'},
+    'Interest Rate Decision':{pips:70,dur:'2-4h'},'Fed Funds Rate':{pips:75,dur:'2-4h'},
+    'FOMC Statement':{pips:60,dur:'2-4h'},'GDP q/q':{pips:40,dur:'1-2h'},'Advance GDP q/q':{pips:50,dur:'1-3h'},
+    'Retail Sales m/m':{pips:40,dur:'1-2h'},'Core Retail Sales m/m':{pips:35,dur:'1-2h'},
+    'ISM Manufacturing PMI':{pips:40,dur:'1-2h'},'ISM Services PMI':{pips:35,dur:'1-2h'},
+    'Employment Change':{pips:45,dur:'1-2h'},'BOE Rate Decision':{pips:65,dur:'2-4h'},
+    'ECB Rate Decision':{pips:65,dur:'2-4h'},'BOJ Rate Decision':{pips:60,dur:'2-4h'},
+    'RBA Rate Decision':{pips:50,dur:'1-3h'},'RBNZ Rate Decision':{pips:50,dur:'1-3h'},
+    'BOC Rate Decision':{pips:55,dur:'1-3h'},'SNB Rate Decision':{pips:50,dur:'1-3h'},
+    'Core PCE Price Index m/m':{pips:45,dur:'1-2h'},'FOMC Meeting Minutes':{pips:40,dur:'1-2h'},
+    'Fed Chair Powell Speaks':{pips:50,dur:'1-3h'},'ECB Press Conference':{pips:55,dur:'1-3h'},
+    'Jackson Hole Symposium':{pips:60,dur:'4-8h'},
+  };
+
+  const CUR_PAIRS = {
+    USD:['EUR/USD','GBP/USD','USD/JPY','USD/CHF','USD/CAD','XAU/USD'],
+    EUR:['EUR/USD','EUR/GBP','EUR/JPY','EUR/CHF'],
+    GBP:['GBP/USD','EUR/GBP','GBP/JPY'],
+    JPY:['USD/JPY','EUR/JPY','GBP/JPY','AUD/JPY'],
+    AUD:['AUD/USD','AUD/JPY','AUD/NZD'],NZD:['NZD/USD','AUD/NZD'],
+    CAD:['USD/CAD','CAD/JPY'],CHF:['USD/CHF','EUR/CHF'],
+  };
+
+  function matchVol(title){
+    if(VOL_MAP[title]) return VOL_MAP[title];
+    const k=Object.keys(VOL_MAP).find(k=>title.toLowerCase().includes(k.toLowerCase()));
+    return k?VOL_MAP[k]:null;
+  }
+
+  function scoreEvent(e){
+    let s=0;
+    if(e.impact==='High') s+=40; else if(e.impact==='Medium') s+=20; else s+=5;
+    const v=matchVol(e.title);
+    if(v){if(v.pips>=60)s+=30;else if(v.pips>=40)s+=20;else s+=10;}
+    if(e.forecast&&e.previous){
+      const fc=parseFloat(e.forecast.replace(/[%KkMmBb,]/g,'')),pv=parseFloat(e.previous.replace(/[%KkMmBb,]/g,''));
+      if(!isNaN(fc)&&!isNaN(pv)&&pv!==0){const d=Math.abs((fc-pv)/pv)*100;if(d>=50)s+=20;else if(d>=20)s+=15;else if(d>=10)s+=10;else if(d>=5)s+=5;}
+    }
+    if(/speaks|speech|testimony|press conference|symposium/i.test(e.title))s+=10;
+    if(/rate decision|funds rate|interest rate/i.test(e.title))s+=15;
+    return Math.min(s,100);
+  }
+
+  function analyzeEvent(e){
+    const score=scoreEvent(e);
+    const tag=score>=75?'extreme':score>=55?'high':score>=35?'moderate':'low';
+    const t=new Date(e.date);
+    const v=matchVol(e.title);
+    return{
+      title:e.title,currency:e.country,time:t,
+      timeLocal:t.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true}),
+      dateLocal:t.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}),
+      impact:e.impact,score,tag,
+      forecast:e.forecast||'—',previous:e.previous||'—',
+      pips:v?v.pips:null,dur:v?v.dur:null,
+      pairs:CUR_PAIRS[e.country]||[],
+    };
+  }
+
+  async function fetchCalendar(){
+    try{
+      const r=await fetch(CALENDAR_URL);
+      const raw=await r.json();
+      ecEvents=raw.filter(e=>e.impact!=='Holiday').map(analyzeEvent).sort((a,b)=>a.time-b.time);
+      renderCalendar();
+    }catch(err){console.error('[EC]',err);}
+  }
+
+  function filterEC(events){
+    if(ecFilter==='all') return events;
+    if(['extreme','high','moderate'].includes(ecFilter)) return events.filter(e=>e.tag===ecFilter);
+    return events.filter(e=>e.currency.toLowerCase()===ecFilter);
+  }
+
+  function renderCalendar(){
+    const list=document.getElementById('ecEventsList');
+    const filtered=filterEC(ecEvents);
+    const now=new Date();
+
+    document.getElementById('ecTotal').textContent=ecEvents.length;
+    document.getElementById('ecHigh').textContent=ecEvents.filter(e=>e.score>=55).length;
+    const next=ecEvents.find(e=>e.time>now);
+    if(next){const d=next.time-now,h=Math.floor(d/3600000),m=Math.floor((d%3600000)/60000);
+      document.getElementById('ecNext').textContent=h>0?h+'h '+m+'m':m+'m';}
+
+    if(!filtered.length){list.innerHTML='<div class="ec-empty-state">No events match filter</div>';return;}
+
+    const groups={};
+    filtered.forEach(e=>{const d=e.dateLocal;if(!groups[d])groups[d]=[];groups[d].push(e);});
+
+    let html='';
+    for(const[day,evts] of Object.entries(groups)){
+      html+=`<div class="ec-day-hdr">${day}</div>`;
+      evts.forEach(e=>{
+        const past=e.time<now;
+        const soon=!past&&(e.time-now)<1800000;
+        const col=e.tag==='extreme'?'var(--accent-red)':e.tag==='high'?'var(--accent-amber)':e.tag==='moderate'?'var(--accent-gold)':'var(--accent-green)';
+        html+=`<div class="ec-evt ec-${e.tag}${past?' ec-past':''}" onclick="this.classList.toggle('expanded')">
+          <div class="ec-evt-top">
+            <span class="ec-evt-cur">${e.currency}</span>
+            <span>${soon?'<span class="ec-countdown-tag">SOON </span>':''}<span class="ec-evt-time">${e.timeLocal}</span></span>
+          </div>
+          <div class="ec-evt-title">${e.title}</div>
+          <div class="ec-evt-row">
+            <span class="ec-badge ec-${e.tag}">${e.tag.toUpperCase()}</span>
+            <span>Score: ${e.score}</span>
+            ${e.pips?`<span>~${e.pips}p</span>`:''}
+          </div>
+          <div class="ec-score-track"><div class="ec-score-bar-fill" style="width:${e.score}%;background:${col}"></div></div>
+          <div class="ec-evt-details">
+            <div class="ec-det-row"><span class="ec-dk">Forecast</span><span class="ec-dv">${e.forecast}</span></div>
+            <div class="ec-det-row"><span class="ec-dk">Previous</span><span class="ec-dv">${e.previous}</span></div>
+            ${e.pips?`<div class="ec-det-row"><span class="ec-dk">Avg Move</span><span class="ec-dv">~${e.pips} pips</span></div>`:''}
+            ${e.dur?`<div class="ec-det-row"><span class="ec-dk">Duration</span><span class="ec-dv">${e.dur}</span></div>`:''}
+            ${e.pairs.length?`<div style="margin-top:6px"><span class="ec-dk">Affected Pairs</span><div class="ec-pairs-wrap">${e.pairs.map(p=>`<span class="ec-pair-chip">${p}</span>`).join('')}</div></div>`:''}
+          </div>
+        </div>`;
+      });
+    }
+    list.innerHTML=html;
+  }
+
+  // Filter buttons
+  document.querySelectorAll('.ec-fbtn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.ec-fbtn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      ecFilter=btn.dataset.ecf;
+      renderCalendar();
+    });
+  });
+
+  // Countdown refresh
+  setInterval(()=>{
+    const now=new Date(),next=ecEvents.find(e=>e.time>now);
+    if(next){const d=next.time-now,h=Math.floor(d/3600000),m=Math.floor((d%3600000)/60000);
+      document.getElementById('ecNext').textContent=h>0?h+'h '+m+'m':m+'m';}
+  },60000);
+
+  // SSE: listen for calendar broadcasts from the bot
+  // The existing SSE connection handles signal events; we also check for calendar data
+  const origOnMessage = eventSource ? eventSource.onmessage : null;
+  function patchSSE(){
+    if(!eventSource) return;
+    const origHandler = eventSource.onmessage;
+    eventSource.addEventListener('message', function(e){
+      try{
+        const d=JSON.parse(e.data);
+        if(d.type==='economic_calendar'&&d.events){
+          ecEvents=d.events.map(ev=>({...ev,time:new Date(ev.time),tag:ev.volatilityTag||ev.tag}));
+          ecEvents.sort((a,b)=>a.time-b.time);
+          renderCalendar();
+        }
+      }catch(err){}
+    });
+  }
+  // Patch after SSE connects
+  setTimeout(patchSSE, 2000);
+  // Also re-patch on reconnect
+  const origConnect = connectSSE;
+  // Direct fetch as primary source
+  fetchCalendar();
+  setInterval(fetchCalendar, 15*60*1000);
+})();
+
+// Calendar toggle
+function toggleCalendar(){
+  const sb=document.getElementById('ecSidebar'),tg=document.getElementById('ecToggle');
+  const collapsed=sb.classList.toggle('collapsed');
+  tg.classList.toggle('collapsed',collapsed);
+  tg.innerHTML=collapsed?'📅':'✕';
+  localStorage.setItem('ec_collapsed',collapsed?'1':'0');
+}
+// Restore state
+if(localStorage.getItem('ec_collapsed')==='1'){
+  document.getElementById('ecSidebar').classList.add('collapsed');
+  document.getElementById('ecToggle').classList.add('collapsed');
+  document.getElementById('ecToggle').innerHTML='📅';
+}
 </script>
 </body>
 </html>
