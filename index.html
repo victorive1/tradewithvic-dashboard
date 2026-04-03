@@ -202,7 +202,8 @@ const _isAdmin = localStorage.getItem('vs_isAdmin') === 'true';
 if (!_token) { window.location.href = '/login.html'; }
 else {
   fetch('https://tradewithvic.com.ngrok.dev/auth/validate', { headers: { 'x-session-token': _token } })
-    .then(r => r.json()).then(d => { if(!d.ok) { localStorage.clear(); window.location.href = '/login.html'; } });
+    .then(r => r.json()).then(d => { if(!d.ok) { localStorage.clear(); window.location.href = '/login.html'; } })
+    .catch(() => {});
 }
 </script>
 <div class="layout">
@@ -374,6 +375,8 @@ else {
 const SSE_URL = 'https://tradewithvic.com.ngrok.dev/events';
 const _authToken = localStorage.getItem('vs_token');
 
+function esc(s){if(s==null)return '';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
+
 let allSignals = [], currentPage = 1;
 const PAGE_SIZE = 20;
 let filterStrategy = '', filterDirection = '', filterStatus = '', filterTimeframe = '';
@@ -511,7 +514,7 @@ function getFiltered() {
   return allSignals.filter(s=>{
     if(filterStrategy && !s.strategy.includes(filterStrategy)) return false;
     if(filterDirection && s.dir!==filterDirection) return false;
-    if(filterStatus && (s.status||'Active').toLowerCase()!==(filterStatus||'').toLowerCase() && filterStatus) return false;
+    if(filterStatus && (s.status||'Active').toLowerCase()!==(filterStatus||'').toLowerCase()) return false;
     if(filterTimeframe && s.tf!==filterTimeframe) return false;
     return true;
   });
@@ -553,31 +556,31 @@ function renderCard(sig, isNew=false) {
     ${isNew?'<div class="new-flash">NEW</div>':''}
     <div class="card-top">
       <div>
-        <div class="card-pair">${sig.pair}</div>
+        <div class="card-pair">${esc(sig.pair)}</div>
         <div class="card-meta">
-          <span class="tag tag-tf">${sig.tf}</span>
-          <span class="tag tag-strategy">${sig.strategy}</span>
-          <span class="tag tag-session">${sig.session}</span>
-          ${sig.timeEstimate ? `<span class="tag tag-time">⏱ ${sig.timeEstimate}</span>` : ''}
+          <span class="tag tag-tf">${esc(sig.tf)}</span>
+          <span class="tag tag-strategy">${esc(sig.strategy)}</span>
+          <span class="tag tag-session">${esc(sig.session)}</span>
+          ${sig.timeEstimate ? `<span class="tag tag-time">⏱ ${esc(sig.timeEstimate)}</span>` : ''}
         </div>
       </div>
       <div class="card-right">
-        <span class="rating-badge ${rc}">${sig.rating}</span>
-        <span class="direction-badge ${sig.dir==='LONG'?'dir-long':'dir-short'}">${sig.dir==='LONG'?'↑':'↓'} ${sig.dir}</span>
+        <span class="rating-badge ${rc}">${esc(sig.rating)}</span>
+        <span class="direction-badge ${sig.dir==='LONG'?'dir-long':'dir-short'}">${sig.dir==='LONG'?'↑':'↓'} ${esc(sig.dir)}</span>
       </div>
     </div>
     <div class="price-grid">
-      <div class="price-cell entry"><div class="pl">Entry</div><div class="pv">${sig.entry}</div></div>
-      <div class="price-cell sl">   <div class="pl">Stop</div> <div class="pv">${sig.sl}</div><div class="pp red">${fmtPips(calcPips(sig.pair,sig.entry,sig.sl))}</div></div>
-      <div class="price-cell tp1">  <div class="pl">TP1</div>  <div class="pv">${sig.tp1}</div><div class="pp green">+${fmtPips(calcPips(sig.pair,sig.entry,sig.tp1))}</div></div>
-      <div class="price-cell tp2">  <div class="pl">TP2</div>  <div class="pv">${sig.tp2}</div><div class="pp green">+${fmtPips(calcPips(sig.pair,sig.entry,sig.tp2))}</div></div>
-      <div class="price-cell rr">   <div class="pl">R:R</div>  <div class="pv">1:${sig.rr}</div></div>
+      <div class="price-cell entry"><div class="pl">Entry</div><div class="pv">${esc(sig.entry)}</div></div>
+      <div class="price-cell sl">   <div class="pl">Stop</div> <div class="pv">${esc(sig.sl)}</div><div class="pp red">${fmtPips(calcPips(sig.pair,sig.entry,sig.sl))}</div></div>
+      <div class="price-cell tp1">  <div class="pl">TP1</div>  <div class="pv">${esc(sig.tp1)}</div><div class="pp green">+${fmtPips(calcPips(sig.pair,sig.entry,sig.tp1))}</div></div>
+      <div class="price-cell tp2">  <div class="pl">TP2</div>  <div class="pv">${esc(sig.tp2)}</div><div class="pp green">+${fmtPips(calcPips(sig.pair,sig.entry,sig.tp2))}</div></div>
+      <div class="price-cell rr">   <div class="pl">R:R</div>  <div class="pv">1:${esc(sig.rr)}</div></div>
     </div>
-    ${sig.status === 'Warning' ? `<div class="warning-bar">⚠️ ${sig.warningReason || 'Price moving against trade'}</div>` : ''}
+    ${sig.status === 'Warning' ? `<div class="warning-bar">⚠️ ${esc(sig.warningReason) || 'Price moving against trade'}</div>` : ''}
     <div class="card-footer">
-      <span class="card-time">${sig.dateStr} · ${sig.timeStr}</span>
+      <span class="card-time">${esc(sig.dateStr)} · ${esc(sig.timeStr)}</span>
       <a href="${getTVUrl(sig)}" target="_blank" onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:4px;font-size:11px;color:#3b82f6;text-decoration:none;padding:3px 8px;border:1px solid rgba(59,130,246,0.3);border-radius:4px;">📈 Chart</a>
-      <span class="status-chip status-${sk}">${(sig.status||'Active').toUpperCase()}</span>
+      <span class="status-chip status-${sk}">${esc((sig.status||'Active').toUpperCase())}</span>
     </div>`;
   return card;
 }
@@ -604,17 +607,17 @@ function renderHistoryTable() {
       const tr=document.createElement('tr');
       const sk=(sig.status||'active').toLowerCase().replace(/\s+/g,'');
       tr.innerHTML=`
-        <td class="pair">${sig.pair}</td>
-        <td class="strategy">${sig.strategy}</td>
-        <td><span class="direction-badge ${sig.dir==='LONG'?'dir-long':'dir-short'}" style="font-size:10px;padding:2px 8px;">${sig.dir==='LONG'?'↑':'↓'} ${sig.dir}</span></td>
-        <td class="entry-price">${sig.entry}</td>
-        <td style="color:var(--accent-red)">${sig.sl}</td>
-        <td style="color:var(--accent-green)">${sig.tp1}</td>
-        <td style="color:var(--accent-green)">${sig.tp2}</td>
-        <td style="color:var(--accent-gold)">1:${sig.rr}</td>
-        <td>${sig.session}</td>
-        <td><span class="status-chip status-${sk}">${(sig.status||'Active').toUpperCase()}</span></td>
-        <td class="detected">${sig.dateStr} ${sig.timeStr}</td>`;
+        <td class="pair">${esc(sig.pair)}</td>
+        <td class="strategy">${esc(sig.strategy)}</td>
+        <td><span class="direction-badge ${sig.dir==='LONG'?'dir-long':'dir-short'}" style="font-size:10px;padding:2px 8px;">${sig.dir==='LONG'?'↑':'↓'} ${esc(sig.dir)}</span></td>
+        <td class="entry-price">${esc(sig.entry)}</td>
+        <td style="color:var(--accent-red)">${esc(sig.sl)}</td>
+        <td style="color:var(--accent-green)">${esc(sig.tp1)}</td>
+        <td style="color:var(--accent-green)">${esc(sig.tp2)}</td>
+        <td style="color:var(--accent-gold)">1:${esc(sig.rr)}</td>
+        <td>${esc(sig.session)}</td>
+        <td><span class="status-chip status-${sk}">${esc((sig.status||'Active').toUpperCase())}</span></td>
+        <td class="detected">${esc(sig.dateStr)} ${esc(sig.timeStr)}</td>`;
       tr.onclick=()=>openModal(sig);
       body.appendChild(tr);
     });
@@ -643,46 +646,46 @@ function openModal(sig) {
   const ds=sig.dir==='LONG'?'↑':'↓';
   document.getElementById('modalBody').innerHTML=`
     <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
-      <span class="rating-badge ${rc}">${sig.rating}</span>
-      <span class="direction-badge ${dc}" style="font-size:12px;">${ds} ${sig.dir}</span>
-      <span class="tag tag-tf" style="font-size:11px;padding:4px 10px;">${sig.tf}</span>
-      <span class="tag tag-strategy" style="font-size:11px;padding:4px 10px;">${sig.strategy}</span>
-      <span class="tag tag-session" style="font-size:11px;padding:4px 10px;">${sig.session}</span>
+      <span class="rating-badge ${rc}">${esc(sig.rating)}</span>
+      <span class="direction-badge ${dc}" style="font-size:12px;">${ds} ${esc(sig.dir)}</span>
+      <span class="tag tag-tf" style="font-size:11px;padding:4px 10px;">${esc(sig.tf)}</span>
+      <span class="tag tag-strategy" style="font-size:11px;padding:4px 10px;">${esc(sig.strategy)}</span>
+      <span class="tag tag-session" style="font-size:11px;padding:4px 10px;">${esc(sig.session)}</span>
     </div>
     <div class="modal-section">
       <div class="modal-section-title">Price Levels</div>
-      <div class="modal-row"><span class="mk">Entry</span><span class="mv" style="color:var(--accent-blue)">${sig.entry}</span></div>
-      <div class="modal-row"><span class="mk">Stop Loss</span><span class="mv" style="color:var(--accent-red)">${sig.sl} <span style="font-size:10px;opacity:0.7">(${fmtPips(calcPips(sig.pair,sig.entry,sig.sl))} risk)</span></span></div>
-      <div class="modal-row"><span class="mk">Take Profit 1</span><span class="mv" style="color:var(--accent-green)">${sig.tp1} <span style="font-size:10px;opacity:0.7">(+${fmtPips(calcPips(sig.pair,sig.entry,sig.tp1))})</span></span></div>
-      <div class="modal-row"><span class="mk">Take Profit 2</span><span class="mv" style="color:var(--accent-green)">${sig.tp2} <span style="font-size:10px;opacity:0.7">(+${fmtPips(calcPips(sig.pair,sig.entry,sig.tp2))})</span></span></div>
-      <div class="modal-row"><span class="mk">Risk : Reward</span><span class="mv" style="color:var(--accent-gold)">1:${sig.rr}</span></div>
+      <div class="modal-row"><span class="mk">Entry</span><span class="mv" style="color:var(--accent-blue)">${esc(sig.entry)}</span></div>
+      <div class="modal-row"><span class="mk">Stop Loss</span><span class="mv" style="color:var(--accent-red)">${esc(sig.sl)} <span style="font-size:10px;opacity:0.7">(${fmtPips(calcPips(sig.pair,sig.entry,sig.sl))} risk)</span></span></div>
+      <div class="modal-row"><span class="mk">Take Profit 1</span><span class="mv" style="color:var(--accent-green)">${esc(sig.tp1)} <span style="font-size:10px;opacity:0.7">(+${fmtPips(calcPips(sig.pair,sig.entry,sig.tp1))})</span></span></div>
+      <div class="modal-row"><span class="mk">Take Profit 2</span><span class="mv" style="color:var(--accent-green)">${esc(sig.tp2)} <span style="font-size:10px;opacity:0.7">(+${fmtPips(calcPips(sig.pair,sig.entry,sig.tp2))})</span></span></div>
+      <div class="modal-row"><span class="mk">Risk : Reward</span><span class="mv" style="color:var(--accent-gold)">1:${esc(sig.rr)}</span></div>
     </div>
     <div class="modal-section">
       <div class="modal-section-title">Signal Info</div>
-      <div class="modal-row"><span class="mk">Timeframe</span><span class="mv">${sig.tf}</span></div>
-      <div class="modal-row"><span class="mk">Session</span><span class="mv">${sig.session}</span></div>
-      <div class="modal-row"><span class="mk">Status</span><span class="mv">${sig.status}</span></div>
-      ${sig.score?`<div class="modal-row"><span class="mk">Score</span><span class="mv" style="color:var(--accent-gold)">${sig.score}/105</span></div>`:''}
-      <div class="modal-row"><span class="mk">Detected</span><span class="mv">${sig.dateStr} · ${sig.timeStr}</span></div>
+      <div class="modal-row"><span class="mk">Timeframe</span><span class="mv">${esc(sig.tf)}</span></div>
+      <div class="modal-row"><span class="mk">Session</span><span class="mv">${esc(sig.session)}</span></div>
+      <div class="modal-row"><span class="mk">Status</span><span class="mv">${esc(sig.status)}</span></div>
+      ${sig.score?`<div class="modal-row"><span class="mk">Score</span><span class="mv" style="color:var(--accent-gold)">${esc(sig.score)}/105</span></div>`:''}
+      <div class="modal-row"><span class="mk">Detected</span><span class="mv">${esc(sig.dateStr)} · ${esc(sig.timeStr)}</span></div>
       <div class="modal-row"><span class="mk">Signal ID</span><span class="mv">#${String(sig.id).slice(-6)}</span></div>
     </div>
     <div class="modal-section">
       <div class="modal-section-title">Raw Signal · Telegram Format</div>
-      <div class="raw-block">${sig.dir==='LONG'?'🟢':'🔴'} ELITE FX SIGNAL — ${sig.pair}
+      <div class="raw-block">${sig.dir==='LONG'?'🟢':'🔴'} ELITE FX SIGNAL — ${esc(sig.pair)}
 ━━━━━━━━━━━━━━━━━━━━━━
-Grade: ${sig.rating}${sig.score?' | Score: '+sig.score+'/105':''}
+Grade: ${esc(sig.rating)}${sig.score?' | Score: '+esc(sig.score)+'/105':''}
 Direction: ${sig.dir==='LONG'?'BUY':'SELL'}
-Setup: ${sig.strategy}
-Timeframes: ${sig.tf}
+Setup: ${esc(sig.strategy)}
+Timeframes: ${esc(sig.tf)}
 
-ENTRY:  ${sig.entry}
-Stop:   ${sig.sl}
-TP1:    ${sig.tp1}
-TP2:    ${sig.tp2}
-R:R:    1:${sig.rr}
+ENTRY:  ${esc(sig.entry)}
+Stop:   ${esc(sig.sl)}
+TP1:    ${esc(sig.tp1)}
+TP2:    ${esc(sig.tp2)}
+R:R:    1:${esc(sig.rr)}
 
-Session: ${sig.session}
-Detected: ${sig.dateStr} ${sig.timeStr}
+Session: ${esc(sig.session)}
+Detected: ${esc(sig.dateStr)} ${esc(sig.timeStr)}
 ━━━━━━━━━━━━━━━━━━━━━━
 ⚠️ A/A+ signals only. Max 1–2% risk per trade.</div>
     </div>`;

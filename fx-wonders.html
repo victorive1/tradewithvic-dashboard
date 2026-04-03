@@ -227,6 +227,8 @@ const SSE_URL = 'https://tradewithvic.com.ngrok.dev/events';
 const _token = localStorage.getItem('vs_token');
 if (!_token) window.location.href = '/login.html';
 
+function esc(s){if(s==null)return '';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
+
 let allAlerts = [];
 let eventSource = null;
 let reconnectTimer = null;
@@ -428,31 +430,31 @@ function renderCard(alert, isNew) {
     <div class="card-body">
       <div class="card-top">
         <div>
-          <div class="card-symbol">${alert.symbol}</div>
+          <div class="card-symbol">${esc(alert.symbol)}</div>
           <div class="card-meta">
-            <span class="tag tag-tf">${alert.timeframe}</span>
-            <span class="tag tag-strategy">${alert.strategy_name}</span>
-            <span class="tag tag-session">${alert.session || ''}</span>
-            <span class="tag tag-type">${alert.setup_type || ''}</span>
+            <span class="tag tag-tf">${esc(alert.timeframe)}</span>
+            <span class="tag tag-strategy">${esc(alert.strategy_name)}</span>
+            <span class="tag tag-session">${esc(alert.session)}</span>
+            <span class="tag tag-type">${esc(alert.setup_type)}</span>
           </div>
         </div>
         <div class="card-right">
-          <span class="grade-badge ${gc}">${alert.confidence_grade}</span>
-          <span class="dir-badge ${dc}">${alert.direction === 'LONG' ? '\u2191' : '\u2193'} ${alert.direction}</span>
+          <span class="grade-badge ${gc}">${esc(alert.confidence_grade)}</span>
+          <span class="dir-badge ${dc}">${alert.direction === 'LONG' ? '\u2191' : '\u2193'} ${esc(alert.direction)}</span>
         </div>
       </div>
       <div class="price-grid">
-        <div class="price-cell"><div class="pl">Entry</div><div class="pv">${entryStr}</div></div>
-        <div class="price-cell"><div class="pl">Stop</div><div class="pv">${alert.stop_loss}</div></div>
-        <div class="price-cell"><div class="pl">TP1</div><div class="pv">${alert.take_profit.tp1}</div><div class="pp green">${alert.risk_reward.tp1_rr}:1</div></div>
-        <div class="price-cell"><div class="pl">TP2</div><div class="pv">${alert.take_profit.tp2}</div><div class="pp green">${alert.risk_reward.tp2_rr}:1</div></div>
-        <div class="price-cell"><div class="pl">TP3</div><div class="pv">${alert.take_profit.tp3}</div><div class="pp green">${alert.risk_reward.tp3_rr}:1</div></div>
+        <div class="price-cell"><div class="pl">Entry</div><div class="pv">${esc(entryStr)}</div></div>
+        <div class="price-cell"><div class="pl">Stop</div><div class="pv">${esc(alert.stop_loss)}</div></div>
+        <div class="price-cell"><div class="pl">TP1</div><div class="pv">${esc(alert.take_profit.tp1)}</div><div class="pp green">${esc(alert.risk_reward.tp1_rr)}:1</div></div>
+        <div class="price-cell"><div class="pl">TP2</div><div class="pv">${esc(alert.take_profit.tp2)}</div><div class="pp green">${esc(alert.risk_reward.tp2_rr)}:1</div></div>
+        <div class="price-cell"><div class="pl">TP3</div><div class="pv">${esc(alert.take_profit.tp3)}</div><div class="pp green">${esc(alert.risk_reward.tp3_rr)}:1</div></div>
       </div>
-      <div class="card-reasoning">${alert.reasoning_summary || ''}</div>
+      <div class="card-reasoning">${esc(alert.reasoning_summary)}</div>
       <div class="card-footer">
-        <span class="card-time">${dateStr} \u00B7 ${timeStr}</span>
-        <span class="card-score">Score: ${alert.score_total}/100</span>
-        <span class="status-chip status-${sk}">${(alert.status || 'New').toUpperCase()}</span>
+        <span class="card-time">${esc(dateStr)} \u00B7 ${esc(timeStr)}</span>
+        <span class="card-score">Score: ${esc(alert.score_total)}/100</span>
+        <span class="status-chip status-${sk}">${esc((alert.status || 'New').toUpperCase())}</span>
       </div>
     </div>
   `;
@@ -472,39 +474,39 @@ function openDrawer(alert) {
     for (const [k, v] of Object.entries(alert.score_breakdown)) {
       const label = k.replace(/_/g, ' ');
       const cls = v < 0 ? 'neg' : 'pos';
-      scoreHtml += `<div class="score-row"><span class="sk">${label}</span><span class="sv ${cls}">${v < 0 ? '' : '+'}${v}</span></div>`;
+      scoreHtml += `<div class="score-row"><span class="sk">${esc(label)}</span><span class="sv ${cls}">${v < 0 ? '' : '+'}${v}</span></div>`;
     }
   }
 
   let confluenceHtml = '';
   if (alert.confluence_factors && alert.confluence_factors.length) {
-    confluenceHtml = alert.confluence_factors.map(f => `<li>${f}</li>`).join('');
+    confluenceHtml = alert.confluence_factors.map(f => `<li>${esc(f)}</li>`).join('');
   }
 
   d.innerHTML = `
     <div class="drawer-close" onclick="closeDrawer()">\u2715</div>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
-      <h2>${alert.symbol}</h2>
-      <span class="dir-badge ${dc}" style="font-size:14px;">${alert.direction === 'LONG' ? '\u2191' : '\u2193'} ${alert.direction}</span>
-      <span class="grade-badge ${gc}">${alert.confidence_grade}</span>
+      <h2>${esc(alert.symbol)}</h2>
+      <span class="dir-badge ${dc}" style="font-size:14px;">${alert.direction === 'LONG' ? '\u2191' : '\u2193'} ${esc(alert.direction)}</span>
+      <span class="grade-badge ${gc}">${esc(alert.confidence_grade)}</span>
     </div>
-    <div class="sub">${alert.strategy_name} \u00B7 ${alert.timeframe} \u00B7 ${alert.session || ''} \u00B7 Score: ${alert.score_total}/100</div>
+    <div class="sub">${esc(alert.strategy_name)} \u00B7 ${esc(alert.timeframe)} \u00B7 ${esc(alert.session)} \u00B7 Score: ${esc(alert.score_total)}/100</div>
 
     <div class="drawer-section">
       <h3>Trade Plan</h3>
       <div class="detail-grid">
-        <div class="detail-cell"><div class="dl">Entry</div><div class="dv">${entryStr}</div></div>
-        <div class="detail-cell"><div class="dl">Stop Loss</div><div class="dv" style="color:var(--accent-red)">${alert.stop_loss}</div></div>
-        <div class="detail-cell"><div class="dl">TP1 (${alert.risk_reward.tp1_rr}:1)</div><div class="dv" style="color:var(--accent-green)">${alert.take_profit.tp1}</div></div>
-        <div class="detail-cell"><div class="dl">TP2 (${alert.risk_reward.tp2_rr}:1)</div><div class="dv" style="color:var(--accent-green)">${alert.take_profit.tp2}</div></div>
-        <div class="detail-cell"><div class="dl">TP3 (${alert.risk_reward.tp3_rr}:1)</div><div class="dv" style="color:var(--accent-green)">${alert.take_profit.tp3}</div></div>
-        <div class="detail-cell"><div class="dl">Status</div><div class="dv">${alert.status || 'New'}</div></div>
+        <div class="detail-cell"><div class="dl">Entry</div><div class="dv">${esc(entryStr)}</div></div>
+        <div class="detail-cell"><div class="dl">Stop Loss</div><div class="dv" style="color:var(--accent-red)">${esc(alert.stop_loss)}</div></div>
+        <div class="detail-cell"><div class="dl">TP1 (${esc(alert.risk_reward.tp1_rr)}:1)</div><div class="dv" style="color:var(--accent-green)">${esc(alert.take_profit.tp1)}</div></div>
+        <div class="detail-cell"><div class="dl">TP2 (${esc(alert.risk_reward.tp2_rr)}:1)</div><div class="dv" style="color:var(--accent-green)">${esc(alert.take_profit.tp2)}</div></div>
+        <div class="detail-cell"><div class="dl">TP3 (${esc(alert.risk_reward.tp3_rr)}:1)</div><div class="dv" style="color:var(--accent-green)">${esc(alert.take_profit.tp3)}</div></div>
+        <div class="detail-cell"><div class="dl">Status</div><div class="dv">${esc(alert.status || 'New')}</div></div>
       </div>
     </div>
 
     <div class="drawer-section">
       <h3>Analysis</h3>
-      <div class="reasoning-full">${alert.reasoning_summary || 'No reasoning provided.'}</div>
+      <div class="reasoning-full">${esc(alert.reasoning_summary || 'No reasoning provided.')}</div>
     </div>
 
     ${confluenceHtml ? `
@@ -521,14 +523,14 @@ function openDrawer(alert) {
 
     <div class="drawer-section">
       <h3>Invalidation</h3>
-      <div class="reasoning-full" style="color:var(--accent-red);border-color:rgba(255,77,109,0.2);">${alert.invalid_if || 'N/A'}</div>
+      <div class="reasoning-full" style="color:var(--accent-red);border-color:rgba(255,77,109,0.2);">${esc(alert.invalid_if || 'N/A')}</div>
     </div>
 
     <div class="drawer-section" style="font-size:11px;color:var(--text-muted);font-family:'Space Mono',monospace;">
-      <div>ID: ${alert.id}</div>
-      <div>Created: ${ts.toLocaleString()}</div>
-      ${alert.expires_at ? `<div>Expires: ${new Date(alert.expires_at).toLocaleString()}</div>` : ''}
-      <div>Source: ${alert.source || 'fxw_alert_engine_v1'}</div>
+      <div>ID: ${esc(alert.id)}</div>
+      <div>Created: ${esc(ts.toLocaleString())}</div>
+      ${alert.expires_at ? `<div>Expires: ${esc(new Date(alert.expires_at).toLocaleString())}</div>` : ''}
+      <div>Source: ${esc(alert.source || 'fxw_alert_engine_v1')}</div>
     </div>
   `;
   document.getElementById('drawerOverlay').classList.add('open');
